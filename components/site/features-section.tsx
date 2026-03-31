@@ -11,27 +11,27 @@ const pillars = [
     title: "Semantic Relevance",
     description:
       "We don't just count keywords. Our LLM-powered engine understands context, mapping your achievements to industry-specific impact.",
-    icon: Brain
+    icon: Brain,
   },
   {
     title: "Keyword Match",
     description:
       "Granular analysis of hard and soft skills. We identify the exact gaps between your profile and the high-intent JD requirements.",
-    icon: FileSearch
+    icon: FileSearch,
   },
   {
     title: "Role Alignment",
     description:
       "A structural audit of your career trajectory. We ensure your narrative aligns perfectly with the seniority of the target position.",
-    icon: Target
-  }
+    icon: Target,
+  },
 ];
 
 export function FeaturesSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start end", "end start"]
+    offset: ["start end", "end start"],
   });
 
   // Background blob parallax
@@ -69,8 +69,8 @@ export function FeaturesSection() {
                   style={{ y: cardYValues[index] }}
                   className="will-change-transform"
                 >
-                  <div className="group h-full rounded-2xl bg-surface-lowest p-8 shadow-ambient transition-shadow duration-300 hover:shadow-panel">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground text-primary-foreground">
+                  <div className="group h-full bg-surface-lowest p-8 shadow-ambient transition-shadow duration-300 hover:shadow-panel">
+                    <div className="flex h-12 w-12 items-center justify-center bg-foreground text-primary-foreground">
                       <Icon className="h-5 w-5" />
                     </div>
                     <h3 className="mt-6 font-display text-xl font-semibold text-foreground">

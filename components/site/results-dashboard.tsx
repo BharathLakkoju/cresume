@@ -54,7 +54,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-2xl bg-surface-lowest p-8 shadow-ambient"
+          className="relative overflow-hidden bg-surface-lowest p-8 shadow-ambient"
         >
           {result.detectedRole && (
             <p className="label-sm text-muted-foreground">
@@ -118,7 +118,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="rounded-2xl bg-foreground p-6 text-primary-foreground"
+          className="bg-foreground p-6 text-primary-foreground"
         >
           <p className="label-sm text-white/50">SUCCESS VECTORS</p>
           <div className="mt-6 space-y-5">
@@ -130,12 +130,12 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
                   </span>
                   <span className="font-semibold text-white">{value}%</span>
                 </div>
-                <div className="mt-2 h-0.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="mt-2 h-0.5 w-full overflow-hidden bg-white/10">
                   <motion.div
                     initial={{ width: "0%" }}
                     animate={{ width: `${value}%` }}
                     transition={{ duration: 0.8, delay: 0.3 }}
-                    className="h-full rounded-full bg-white/70"
+                    className="h-full bg-white/70"
                   />
                 </div>
               </div>
@@ -156,10 +156,10 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="rounded-2xl bg-surface-lowest p-8 shadow-ambient"
+          className="bg-surface-lowest p-8 shadow-ambient"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-low">
+            <div className="flex h-10 w-10 items-center justify-center bg-surface-low">
               <svg
                 width="18"
                 height="18"
@@ -188,14 +188,14 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
                 {result.missingKeywords.slice(0, 3).map((kw) => (
                   <span
                     key={kw}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700"
+                    className="inline-flex items-center gap-1.5 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700"
                   >
                     <X className="h-3 w-3" />
                     {kw.toUpperCase()}
                   </span>
                 ))}
                 {result.missingKeywords.length > 3 && (
-                  <span className="inline-flex items-center rounded-full bg-surface-low px-3 py-1.5 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center bg-surface-low px-3 py-1.5 text-xs text-muted-foreground">
                     + {result.missingKeywords.length - 3} more
                   </span>
                 )}
@@ -210,10 +210,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
               </p>
               <div className="mt-3 space-y-3">
                 {result.resumeGaps.slice(0, 3).map((gap) => (
-                  <div
-                    key={gap.label}
-                    className="flex gap-3 rounded-xl bg-red-50 p-4"
-                  >
+                  <div key={gap.label} className="flex gap-3 bg-red-50 p-4">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -236,7 +233,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
                 {result.matchedSkills.slice(0, 6).map((skill) => (
                   <span
                     key={skill}
-                    className="rounded-full bg-surface-low px-3 py-1.5 text-xs font-medium text-foreground"
+                    className="bg-surface-low px-3 py-1.5 text-xs font-medium text-foreground"
                   >
                     {skill}
                   </span>
@@ -251,10 +248,10 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-col rounded-2xl bg-surface-lowest p-8 shadow-ambient"
+          className="flex flex-col bg-surface-lowest p-8 shadow-ambient"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-low">
+            <div className="flex h-10 w-10 items-center justify-center bg-surface-low">
               <svg
                 width="18"
                 height="18"
@@ -277,7 +274,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
             {result.suggestions.map((s) => (
               <div
                 key={s.title}
-                className="flex items-center justify-between gap-4 rounded-xl bg-surface-low p-4 transition-colors hover:bg-surface-highest"
+                className="flex items-center justify-between gap-4 bg-surface-low p-4 transition-all duration-200 ease-out hover:bg-surface-highest"
               >
                 <div>
                   <p className="text-sm font-semibold text-foreground">
@@ -307,7 +304,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
                         height: `${Math.max(entry.result.overallScore * 0.56, 14)}px`,
                       }}
                       transition={{ duration: 0.5, delay: i * 0.1 }}
-                      className={`w-8 max-w-8 rounded-t-md ${
+                      className={`w-8 max-w-8 ${
                         i === arr.length - 1
                           ? "bg-foreground"
                           : "bg-surface-highest"

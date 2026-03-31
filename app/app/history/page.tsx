@@ -26,19 +26,27 @@ export default function HistoryPage() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    supabase.auth.getUser().then(async ({ data }: { data: { user: import("@supabase/supabase-js").User | null } }) => {
-      if (!data.user) return;
-      setIsLoggedIn(true);
+    supabase.auth
+      .getUser()
+      .then(
+        async ({
+          data,
+        }: {
+          data: { user: import("@supabase/supabase-js").User | null };
+        }) => {
+          if (!data.user) return;
+          setIsLoggedIn(true);
 
-      const { data: rows } = await supabase
-        .from("user_evaluations")
-        .select("id, job_title, overall_score, mode, created_at")
-        .eq("user_id", data.user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+          const { data: rows } = await supabase
+            .from("user_evaluations")
+            .select("id, job_title, overall_score, mode, created_at")
+            .eq("user_id", data.user.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
 
-      if (rows) setRemoteHistory(rows as RemoteEntry[]);
-    });
+          if (rows) setRemoteHistory(rows as RemoteEntry[]);
+        },
+      );
   }, []);
 
   const displayList =
@@ -46,17 +54,17 @@ export default function HistoryPage() {
   const fallbackList = localHistory;
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="p-4 sm:p-6 lg:p-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
         <p className="label-sm text-muted-foreground">EVALUATION ARCHIVE</p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           History
         </h1>
-        <p className="mt-4 max-w-xl text-muted-foreground">
+        <p className="mt-4 text-sm sm:text-base text-muted-foreground">
           {isLoggedIn
             ? "Your full evaluation history synced from the cloud."
             : "Local session history. Sign in to sync evaluations across devices."}
@@ -64,21 +72,21 @@ export default function HistoryPage() {
 
         {displayList !== null ? (
           displayList.length > 0 ? (
-            <div className="mt-10 space-y-4">
+            <div className="mt-6 sm:mt-10 space-y-3 sm:space-y-4">
               {displayList.map((entry, index) => (
                 <motion.div
                   key={entry.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.06 }}
-                  className="flex items-center justify-between gap-4 rounded-2xl bg-surface-lowest p-6 shadow-ambient"
+                  className="flex items-center justify-between gap-3 sm:gap-4 bg-surface-lowest p-4 sm:p-6 shadow-ambient"
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-display text-lg font-semibold text-foreground">
                         {entry.job_title || "Evaluation"}
                       </p>
-                      <span className="inline-flex items-center gap-1 rounded-full bg-surface-low px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                      <span className="inline-flex items-center gap-1 bg-surface-low px-2 py-0.5 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                         {entry.mode === "tailoring" ? (
                           <>
                             <Sparkles className="h-2.5 w-2.5" /> TAILORING
@@ -115,14 +123,14 @@ export default function HistoryPage() {
             </div>
           )
         ) : fallbackList.length > 0 ? (
-          <div className="mt-10 space-y-4">
+          <div className="mt-6 sm:mt-10 space-y-3 sm:space-y-4">
             {fallbackList.map((entry, index) => (
               <motion.div
                 key={entry.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: index * 0.06 }}
-                className="flex items-center justify-between gap-4 rounded-2xl bg-surface-lowest p-6 shadow-ambient"
+                className="flex items-center justify-between gap-3 sm:gap-4 bg-surface-lowest p-4 sm:p-6 shadow-ambient"
               >
                 <div>
                   <p className="font-display text-lg font-semibold text-foreground">

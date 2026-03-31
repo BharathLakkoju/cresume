@@ -7,7 +7,10 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getSupabaseBrowserClient, hasSupabaseConfig } from "@/lib/supabase/client";
+import {
+  getSupabaseBrowserClient,
+  hasSupabaseConfig,
+} from "@/lib/supabase/client";
 
 const signUpSchema = z.object({
   email: z.string().email("Enter a valid email address."),
@@ -38,7 +41,9 @@ export function AuthForm() {
     }
 
     if (!hasSupabaseConfig()) {
-      setError("Authentication is not configured. Check environment variables.");
+      setError(
+        "Authentication is not configured. Check environment variables.",
+      );
       return;
     }
 
@@ -51,11 +56,19 @@ export function AuthForm() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error: authError } = await client.auth.signUp({ email, password });
+        const { error: authError } = await client.auth.signUp({
+          email,
+          password,
+        });
         if (authError) throw authError;
-        setMessage("Account created! Check your email to confirm, then sign in.");
+        setMessage(
+          "Account created! Check your email to confirm, then sign in.",
+        );
       } else {
-        const { error: authError } = await client.auth.signInWithPassword({ email, password });
+        const { error: authError } = await client.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (authError) throw authError;
         router.push("/app/upload");
         router.refresh();
@@ -64,7 +77,7 @@ export function AuthForm() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Something went wrong. Please try again."
+          : "Something went wrong. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -72,15 +85,19 @@ export function AuthForm() {
   }
 
   return (
-    <div className="rounded-2xl bg-surface-lowest p-8 shadow-ambient">
+    <div className="bg-surface-lowest p-8 shadow-ambient">
       {/* Mode Toggle */}
-      <div className="mb-6 flex rounded-xl bg-surface-low p-1">
+      <div className="mb-6 flex bg-surface-low p-1">
         {(["signup", "login"] as AuthMode[]).map((m) => (
           <button
             key={m}
             type="button"
-            onClick={() => { setMode(m); setError(null); setMessage(null); }}
-            className={`flex-1 rounded-lg py-2.5 text-xs font-semibold uppercase tracking-widest transition-all duration-200 ${
+            onClick={() => {
+              setMode(m);
+              setError(null);
+              setMessage(null);
+            }}
+            className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-widest transition-all duration-200 ease-out ${
               mode === m
                 ? "bg-foreground text-white shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -103,7 +120,7 @@ export function AuthForm() {
             placeholder="you@example.com"
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="h-12 rounded-xl bg-surface-low text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-foreground"
+            className="h-12 bg-surface-low text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-foreground"
           />
         </div>
 
@@ -115,31 +132,37 @@ export function AuthForm() {
             id="password"
             type="password"
             value={password}
-            placeholder={mode === "signup" ? "Min. 8 characters" : "Your password"}
+            placeholder={
+              mode === "signup" ? "Min. 8 characters" : "Your password"
+            }
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="h-12 rounded-xl bg-surface-low text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-foreground"
+            className="h-12 bg-surface-low text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-foreground"
           />
         </div>
 
         <Button
           type="submit"
-          className="h-12 w-full rounded-xl"
+          className="h-12 w-full"
           size="lg"
           disabled={loading}
         >
           {loading
-            ? mode === "signup" ? "Creating Account..." : "Signing In..."
-            : mode === "signup" ? "Create Account" : "Sign In"}
+            ? mode === "signup"
+              ? "Creating Account..."
+              : "Signing In..."
+            : mode === "signup"
+              ? "Create Account"
+              : "Sign In"}
         </Button>
 
         {message && (
-          <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          <div className="bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
             {message}
           </div>
         )}
         {error && (
-          <div className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
             {error}
           </div>
         )}

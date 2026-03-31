@@ -23,10 +23,10 @@ const navItems: Array<{
   href: Route;
   icon: typeof Home;
 }> = [
-  { label: "HOME",    href: "/app"           as Route, icon: Home     },
-  { label: "UPLOAD",  href: "/app/upload"   as Route, icon: Plus     },
+  { label: "HOME", href: "/app" as Route, icon: Home },
+  { label: "UPLOAD", href: "/app/upload" as Route, icon: Plus },
   { label: "RESULTS", href: "/app/analysis" as Route, icon: BarChart3 },
-  { label: "PROFILE", href: "/app/settings" as Route, icon: UserIcon  },
+  { label: "PROFILE", href: "/app/profile" as Route, icon: UserIcon },
 ];
 
 export function Sidebar() {
@@ -38,16 +38,16 @@ export function Sidebar() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) =>
-      setUser(data.user)
-    );
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => setUser(data.user));
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null);
-      }
+      },
     );
     return () => subscription.unsubscribe();
   }, []);
@@ -67,11 +67,11 @@ export function Sidebar() {
   return (
     <>
       {/* ── Desktop sidebar (lg+) ─────────────────────────────────────── */}
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-[hsl(var(--border)/0.08)] bg-surface-base lg:flex">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-[hsl(var(--border)/0.08)] bg-surface-base lg:flex lg:h-full lg:overflow-y-auto">
         {/* User Section */}
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-highest">
+            <div className="flex h-10 w-10 items-center justify-center bg-surface-highest">
               <span className="text-sm font-semibold text-muted-foreground">
                 {initials}
               </span>
@@ -99,7 +99,7 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200",
+                  "flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-200 ease-out",
                   active
                     ? "bg-foreground text-primary-foreground font-medium"
                     : "text-muted-foreground hover:bg-surface-low hover:text-foreground",
@@ -117,7 +117,7 @@ export function Sidebar() {
           <Link
             href={"/app/settings" as Route}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200",
+              "flex items-center gap-3 px-3 py-2.5 text-sm transition-all duration-200 ease-out",
               isActive("/app/settings" as Route)
                 ? "bg-foreground text-primary-foreground font-medium"
                 : "text-muted-foreground hover:bg-surface-low hover:text-foreground",
@@ -130,7 +130,7 @@ export function Sidebar() {
           {user && (
             <button
               onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground"
+              className="flex w-full items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground transition-all duration-200 ease-out hover:bg-surface-low hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
               <span>Sign Out</span>
@@ -167,21 +167,25 @@ export function Sidebar() {
                 href={item.href}
                 className={cn(
                   "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
-                  active ? "-mt-4" : ""
+                  active ? "-mt-4" : "",
                 )}
               >
                 <span
                   className={cn(
-                    "flex items-center justify-center rounded-full transition-all duration-200",
+                    "flex items-center justify-center transition-all duration-200 ease-out",
                     active
                       ? "h-12 w-12 bg-foreground shadow-panel"
                       : "h-8 w-8 bg-surface-highest",
                   )}
                 >
-                  <Plus className={cn(
-                    "transition-all duration-200",
-                    active ? "h-5 w-5 text-primary-foreground" : "h-4 w-4 text-muted-foreground"
-                  )} />
+                  <Plus
+                    className={cn(
+                      "transition-all duration-200",
+                      active
+                        ? "h-5 w-5 text-primary-foreground"
+                        : "h-4 w-4 text-muted-foreground",
+                    )}
+                  />
                 </span>
                 <span
                   className={cn(
@@ -203,14 +207,16 @@ export function Sidebar() {
             >
               <span
                 className={cn(
-                  "flex items-center justify-center rounded-full px-3 py-1.5 transition-colors",
+                  "flex items-center justify-center px-3 py-1.5 transition-all duration-200 ease-out",
                   active ? "bg-foreground" : "",
                 )}
               >
                 <Icon
                   className={cn(
                     "h-5 w-5 transition-colors",
-                    active ? "text-primary-foreground" : "text-muted-foreground",
+                    active
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground",
                   )}
                 />
               </span>
@@ -243,20 +249,20 @@ function MobileUserMenu({
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-highest text-sm font-semibold text-muted-foreground transition-colors hover:bg-surface-low"
+        className="flex h-9 w-9 items-center justify-center bg-surface-highest text-sm font-semibold text-muted-foreground transition-all duration-200 ease-out hover:bg-surface-low"
       >
         {initials}
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-11 z-50 w-44 rounded-xl border border-[hsl(var(--border)/0.15)] bg-surface-lowest p-1.5 shadow-ambient">
+          <div className="absolute right-0 top-11 z-50 w-44 border border-[hsl(var(--border)/0.15)] bg-surface-lowest p-1.5 shadow-ambient">
             <button
               onClick={() => {
                 setOpen(false);
                 onSignOut();
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground"
+              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground transition-all duration-200 ease-out hover:bg-surface-low hover:text-foreground"
             >
               <LogOut className="h-4 w-4" />
               Sign Out

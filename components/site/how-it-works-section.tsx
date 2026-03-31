@@ -11,31 +11,31 @@ const steps = [
     number: "01",
     title: "Upload Resume",
     detail:
-      "Drop your PDF or DOCX file. We handle complex layouts and parse them into raw semantic data."
+      "Drop your PDF or DOCX file. We handle complex layouts and parse them into raw semantic data.",
   },
   {
     number: "02",
     title: "Paste JD",
     detail:
-      "Provide the target Job Description. Our AI analyzes the hidden constraints of the role."
+      "Provide the target Job Description. Our AI analyzes the hidden constraints of the role.",
   },
   {
     number: "03",
     title: "Get Results",
     detail:
-      "Receive an interactive report with a precision score and actionable, line-by-line feedback."
-  }
+      "Receive an interactive report with a precision score and actionable, line-by-line feedback.",
+  },
 ];
 
 export function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start end", "end start"]
+    offset: ["start end", "end start"],
   });
 
   // Upload card floats upward as you scroll through the section
-  const cardY    = useTransform(scrollYProgress, [0, 1], [80, -60]);
+  const cardY = useTransform(scrollYProgress, [0, 1], [80, -60]);
   const cardRotate = useTransform(scrollYProgress, [0, 1], [-1.5, 1.5]);
 
   // Step numbers drift at a slower rate (parallax depth layer)
@@ -55,7 +55,10 @@ export function HowItWorksSection() {
 
         <div className="mt-16 grid items-start gap-12 lg:grid-cols-2">
           {/* Left — Steps with subtle parallax drift */}
-          <motion.div style={{ y: stepsY }} className="space-y-10 will-change-transform">
+          <motion.div
+            style={{ y: stepsY }}
+            className="space-y-10 will-change-transform"
+          >
             {steps.map((step, index) => (
               <FadeIn key={step.number} delay={index * 0.1}>
                 <div className="flex gap-5">
@@ -79,26 +82,24 @@ export function HowItWorksSection() {
           <FadeIn delay={0.2}>
             <motion.div
               style={{ y: cardY, rotate: cardRotate }}
-              className="will-change-transform rounded-2xl bg-surface-lowest p-8 shadow-panel"
+              className="will-change-transform bg-surface-lowest p-8 shadow-panel"
             >
-              <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-surface-highest py-16">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-foreground text-white">
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-surface-highest py-16">
+                <div className="flex h-14 w-14 items-center justify-center bg-foreground text-white">
                   <FileUp className="h-6 w-6" />
                 </div>
                 <p className="mt-4 font-display font-semibold text-foreground">
                   Drag your file here
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Max 5MB
-                </p>
+                <p className="mt-1 text-sm text-muted-foreground">Max 5MB</p>
               </div>
-              <div className="mt-6 h-1 overflow-hidden rounded-full bg-surface-highest">
+              <div className="mt-6 h-1 overflow-hidden bg-surface-highest">
                 <motion.div
                   initial={{ width: "0%" }}
                   whileInView={{ width: "65%" }}
                   viewport={{ once: true }}
                   transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
-                  className="h-full rounded-full bg-foreground"
+                  className="h-full bg-foreground"
                 />
               </div>
               <p className="mt-3 label-sm text-right text-muted-foreground">

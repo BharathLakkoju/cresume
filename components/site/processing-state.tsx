@@ -7,21 +7,30 @@ const analysisStages = [
   "PARSING RESUME CONTENT...",
   "ANALYZING JOB DESCRIPTION...",
   "CALCULATING SEMANTIC SIMILARITY...",
-  "GENERATING ATS SCORE..."
+  "GENERATING ATS SCORE...",
 ];
 
 const tailoringStages = [
   "PARSING RESUME STRUCTURE...",
   "MATCHING JD KEYWORDS...",
   "GENERATING PRECISION REWRITES...",
-  "FINALIZING TAILORED VERSION..."
+  "FINALIZING TAILORED VERSION...",
 ];
 
 type Mode = "analysis" | "tailoring";
 
-export function ProcessingState({ activeStage, mode = "analysis" }: { activeStage: number; mode?: Mode }) {
+export function ProcessingState({
+  activeStage,
+  mode = "analysis",
+}: {
+  activeStage: number;
+  mode?: Mode;
+}) {
   const stages = mode === "tailoring" ? tailoringStages : analysisStages;
-  const progressPercent = Math.min(((activeStage + 1) / stages.length) * 100, 95);
+  const progressPercent = Math.min(
+    ((activeStage + 1) / stages.length) * 100,
+    95,
+  );
 
   return (
     <div className="flex flex-col items-center text-center">
@@ -32,9 +41,15 @@ export function ProcessingState({ activeStage, mode = "analysis" }: { activeStag
         transition={{ duration: 0.6 }}
         className="relative mb-10"
       >
-        <div className="flex h-32 w-32 items-center justify-center rounded-2xl bg-surface-low shadow-ambient">
+        <div className="flex h-32 w-32 items-center justify-center bg-surface-low shadow-ambient">
           {/* Animated checkmark lines */}
-          <svg width="60" height="60" viewBox="0 0 60 60" fill="none" className="text-foreground">
+          <svg
+            width="60"
+            height="60"
+            viewBox="0 0 60 60"
+            fill="none"
+            className="text-foreground"
+          >
             <motion.path
               d="M15 28 L28 42"
               stroke="currentColor"
@@ -85,15 +100,19 @@ export function ProcessingState({ activeStage, mode = "analysis" }: { activeStag
       {/* Progress Bar */}
       <div className="mt-10 w-full max-w-md">
         <div className="flex items-center justify-between text-sm">
-          <span className="label-sm text-muted-foreground">SYSTEM INTEGRITY: OPTIMAL</span>
-          <span className="label-sm text-foreground">{Math.round(progressPercent)}%</span>
+          <span className="label-sm text-muted-foreground">
+            SYSTEM INTEGRITY: OPTIMAL
+          </span>
+          <span className="label-sm text-foreground">
+            {Math.round(progressPercent)}%
+          </span>
         </div>
-        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-surface-highest">
+        <div className="mt-3 h-1 w-full overflow-hidden bg-surface-highest">
           <motion.div
             initial={{ width: "0%" }}
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="h-full rounded-full bg-foreground"
+            className="h-full bg-foreground"
           />
         </div>
       </div>
@@ -115,9 +134,7 @@ export function ProcessingState({ activeStage, mode = "analysis" }: { activeStag
                   : "text-muted-foreground"
               }`}
             >
-              {isActive && (
-                <span className="h-2 w-2 rounded-full bg-foreground" />
-              )}
+              {isActive && <span className="h-2 w-2 bg-foreground" />}
               {stage}
             </motion.p>
           );
@@ -133,8 +150,8 @@ export function ProcessingState({ activeStage, mode = "analysis" }: { activeStag
       >
         <p className="label-sm text-muted-foreground">TECHNICAL NOTE</p>
         <p className="mt-2 text-sm italic text-muted-foreground">
-          &ldquo;Precision is not just about the match, but the semantic resonance
-          between your experience and their intent.&rdquo;
+          &ldquo;Precision is not just about the match, but the semantic
+          resonance between your experience and their intent.&rdquo;
         </p>
       </motion.div>
     </div>

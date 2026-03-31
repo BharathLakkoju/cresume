@@ -1,4 +1,4 @@
-import { integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * Tracks anonymous usage per IP address for the 2-free-uses gate.
@@ -29,5 +29,31 @@ export const userEvaluations = pgTable("user_evaluations", {
   missingKeywords: text("missing_keywords").array().notNull().default([]),
   matchedSkills: text("matched_skills").array().notNull().default([]),
   mode: text("mode").notNull().default("analysis"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+/**
+ * Stores a user's complete resume profile (contact, experience, skills, projects, etc.)
+ * One row per user. Upserted on save from the Profile page.
+ * user_id references auth.users(id) — enforced via Supabase RLS.
+ */
+export const userProfiles = pgTable("user_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().unique(),
+  name: text("name").notNull().default(""),
+  email: text("email").default(""),
+  phone: text("phone").default(""),
+  location: text("location").default(""),
+  linkedin: text("linkedin").default(""),
+  github: text("github").default(""),
+  summary: text("summary").default(""),
+  experience: jsonb("experience").notNull().default([]),
+  skills: jsonb("skills").notNull().default([]),
+  projects: jsonb("projects").notNull().default([]),
+  education: jsonb("education").notNull().default([]),
+  certifications: text("certifications").array().notNull().default([]),
+  awards: text("awards").array().notNull().default([]),
+  isComplete: boolean("is_complete").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
 });

@@ -1,0 +1,309 @@
+import { NextResponse } from "next/server";
+
+import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
+import { TAILORING_SYSTEM_PROMPT } from "@/lib/openrouter/prompts";
+import { getCurrentUser } from "@/lib/supabase/auth-helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/service";
+
+const FREE_USE_LIMIT = 2;
+
+interface ContactInfo {
+  email: string;
+  phone: string;
+  linkedin: string;
+  github: string;
+  location: string;
+}
+
+interface ResumeData {
+  name: string;
+  contact: ContactInfo;
+  summary: string;
+  experience: Array<{
+    company: string;
+    title: string;
+    dates: string;
+    location: string;
+    bullets: string[];
+  }>;
+  skills: Array<{ category: string; items: string[] }>;
+  projects: Array<{
+    name: string;
+    tech: string;
+    link: string;
+    bullets: string[];
+  }>;
+  education: Array<{
+    institution: string;
+    degree: string;
+    year: string;
+    gpa: string;
+  }>;
+  certifications: string[];
+}
+
+interface TailoringResult {
+  issues: Array<{ section: string; issue: string; severity: string }>;
+  tailoredResume: {
+    name: string;
+    contact: ContactInfo;
+    summary: string;
+    experience: Array<{
+      company: string;
+      title: string;
+      dates: string;
+      location: string;
+      bullets: string[];
+    }>;
+    skills: Array<{ category: string; items: string[] }>;
+    projects: Array<{
+      name: string;
+      tech: string;
+      link: string;
+      bullets: string[];
+    }>;
+    education: Array<{
+      degree: string;
+      institution: string;
+      year: string;
+      gpa: string;
+    }>;
+    certifications: string[];
+  };
+  changesApplied: Array<{ section: string; what: string; why: string }>;
+  atsScore?: number;
+}
+
+/**
+ * Converts structured resume form data into a readable text representation
+ * that the AI tailoring prompt can process.
+ */
+function serializeResumeData(r: ResumeData): string {
+  const lines: string[] = [];
+
+  lines.push(`Name: ${r.name}`);
+  if (r.contact.email) lines.push(`Email: ${r.contact.email}`);
+  if (r.contact.phone) lines.push(`Phone: ${r.contact.phone}`);
+  if (r.contact.location) lines.push(`Location: ${r.contact.location}`);
+  if (r.contact.linkedin) lines.push(`LinkedIn: ${r.contact.linkedin}`);
+  if (r.contact.github) lines.push(`GitHub: ${r.contact.github}`);
+
+  if (r.summary) {
+    lines.push("", "PROFESSIONAL SUMMARY", r.summary);
+  }
+
+  if (r.experience.length > 0) {
+    lines.push("", "EXPERIENCE");
+    for (const exp of r.experience) {
+      lines.push(`Company: ${exp.company}`);
+      lines.push(`Title: ${exp.title}`);
+      if (exp.dates) lines.push(`Dates: ${exp.dates}`);
+      if (exp.location) lines.push(`Location: ${exp.location}`);
+      if (exp.bullets.length > 0) {
+        lines.push("Responsibilities:");
+        for (const b of exp.bullets) {
+          if (b.trim()) lines.push(`- ${b.trim()}`);
+        }
+      }
+      lines.push("");
+    }
+  }
+
+  if (r.skills.length > 0) {
+    lines.push("SKILLS");
+    for (const s of r.skills) {
+      if (s.category || s.items.length > 0) {
+        lines.push(`${s.category}: ${s.items.join(", ")}`);
+      }
+    }
+  }
+
+  if (r.projects.length > 0) {
+    lines.push("", "PROJECTS");
+    for (const p of r.projects) {
+      lines.push(`Project: ${p.name}`);
+      if (p.tech) lines.push(`Tech Stack: ${p.tech}`);
+      if (p.link) lines.push(`Link: ${p.link}`);
+      if (p.bullets.length > 0) {
+        lines.push("Details:");
+        for (const b of p.bullets) {
+          if (b.trim()) lines.push(`- ${b.trim()}`);
+        }
+      }
+      lines.push("");
+    }
+  }
+
+  if (r.education.length > 0) {
+    lines.push("EDUCATION");
+    for (const e of r.education) {
+      lines.push(`Institution: ${e.institution}`);
+      lines.push(`Degree: ${e.degree}`);
+      if (e.year) lines.push(`Year: ${e.year}`);
+      if (e.gpa) lines.push(`GPA/CGPA: ${e.gpa}`);
+      lines.push("");
+    }
+  }
+
+  if (r.certifications.length > 0) {
+    lines.push("CERTIFICATIONS");
+    for (const c of r.certifications) {
+      if (c.trim()) lines.push(c.trim());
+    }
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * POST /api/build
+ *
+ * Accepts structured resume form data + job description.
+ * Returns a fully tailored resume optimized for ≥95% ATS score.
+ */
+export async function POST(request: Request) {
+  const start = Date.now();
+
+  try {
+    /* ── 1. Parse JSON body ──────────────────────────────────── */
+    let body: { resumeData?: unknown; jdText?: unknown; format?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body." },
+        { status: 400 }
+      );
+    }
+
+    const { resumeData, jdText, format = "pdf" } = body;
+
+    if (!resumeData || typeof jdText !== "string") {
+      return NextResponse.json(
+        { error: "Resume data and job description are required." },
+        { status: 400 }
+      );
+    }
+
+    const rd = resumeData as ResumeData;
+
+    if (!rd.name?.trim()) {
+      return NextResponse.json(
+        { error: "Full name is required." },
+        { status: 400 }
+      );
+    }
+
+    if (jdText.trim().length < 120) {
+      return NextResponse.json(
+        { error: "Paste a fuller job description for accurate tailoring (min 120 characters)." },
+        { status: 400 }
+      );
+    }
+
+    /* ── 2. Rate-limit gate ──────────────────────────────────── */
+    const user = await getCurrentUser();
+    if (!user) {
+      const forwarded = request.headers.get("x-forwarded-for");
+      const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
+      const service = getSupabaseServiceClient();
+
+      if (service) {
+        const { data: row } = await service
+          .from("ip_usage")
+          .select("use_count")
+          .eq("ip_address", ip)
+          .single();
+
+        if (row && row.use_count >= FREE_USE_LIMIT) {
+          return NextResponse.json(
+            { error: "FREE_LIMIT_REACHED", usesLeft: 0 },
+            { status: 403 }
+          );
+        }
+
+        await service.from("ip_usage").upsert(
+          {
+            ip_address: ip,
+            use_count: (row?.use_count ?? 0) + 1,
+            last_used_at: new Date().toISOString(),
+          },
+          { onConflict: "ip_address" }
+        );
+      }
+    }
+
+    /* ── 3. Serialize resume data to text ────────────────────── */
+    const resumeText = serializeResumeData(rd);
+    const userMessage = `## RESUME (entered via structured builder form)\n\n${resumeText}\n\n---\n\n## JOB DESCRIPTION\n\n${jdText.trim()}`;
+
+    /* ── 4. Call AI ──────────────────────────────────────────── */
+    let aiRawResponse: string | null;
+    try {
+      aiRawResponse = await callOpenRouter(
+        TAILORING_SYSTEM_PROMPT,
+        userMessage,
+        undefined,
+        90_000,
+        6144
+      );
+    } catch {
+      return NextResponse.json(
+        { error: "AI service is not configured. Please set OPENROUTER_API_KEY." },
+        { status: 503 }
+      );
+    }
+
+    if (!aiRawResponse) {
+      return NextResponse.json(
+        { error: "AI service is temporarily unavailable. Please try again.", retryable: true },
+        { status: 503 }
+      );
+    }
+
+    /* ── 5. Parse AI response ────────────────────────────────── */
+    const aiResult = parseJsonFromModel<TailoringResult>(aiRawResponse);
+
+    if (!aiResult || !aiResult.tailoredResume) {
+      console.error("[build] AI returned invalid structure:", aiRawResponse.slice(0, 500));
+      return NextResponse.json(
+        { error: "AI returned an unexpected response format. Please try again.", retryable: true },
+        { status: 502 }
+      );
+    }
+
+    /* ── 6. Save metadata for authenticated users ─────────────── */
+    if (user) {
+      const service = getSupabaseServiceClient();
+      if (service) {
+        await service
+          .from("user_evaluations")
+          .insert({
+            user_id: user.id,
+            job_title: aiResult.tailoredResume.experience?.[0]?.title ?? "Built Resume",
+            overall_score: aiResult.atsScore ?? 0,
+            breakdown: {},
+            suggestions: aiResult.changesApplied ?? [],
+            missing_keywords: [],
+            matched_skills: [],
+            mode: "builder",
+          })
+          .then(({ error }) => {
+            if (error) console.error("[build] Failed to save evaluation:", error.message);
+          });
+      }
+    }
+
+    return NextResponse.json({
+      ...aiResult,
+      format,
+      processingMs: Date.now() - start,
+    });
+  } catch (err) {
+    console.error("[build] Unhandled error:", err);
+    return NextResponse.json(
+      { error: "An unexpected error occurred. Please try again." },
+      { status: 500 }
+    );
+  }
+}

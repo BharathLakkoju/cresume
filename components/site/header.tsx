@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 const navLinks = [
   { label: "Features", href: "#features" },
   { label: "How It Works", href: "#workflow" },
-  { label: "Pricing", href: "#pricing" }
+  { label: "Pricing", href: "#pricing" },
 ];
 
 export function Header() {
@@ -19,7 +19,10 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 glass border-b border-[hsl(var(--border)/0.08)]">
       <div className="container flex h-16 items-center justify-between gap-6">
-        <Link href="/" className="font-display text-lg font-bold tracking-tight text-foreground">
+        <Link
+          href="/"
+          className="font-display text-lg font-bold tracking-tight text-foreground"
+        >
           ATS Precision
         </Link>
 
@@ -52,10 +55,14 @@ export function Header() {
         {/* Mobile Toggle */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-foreground md:hidden"
+          className="flex h-10 w-10 items-center justify-center text-foreground md:hidden"
           aria-label="Toggle menu"
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {mobileOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </button>
       </div>
 
