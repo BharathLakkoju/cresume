@@ -1,0 +1,248 @@
+ATS Resume Evaluator (AI-Powered Hiring Alignment Tool)
+1. 🧠 Product Overview
+
+Product Name: ATS Precision
+Type: Web Application (SEO-optimized SaaS tool)
+Target Users:
+
+Job seekers (students, developers, professionals)
+Recruiters (optional future scope)
+
+Core Idea:
+A web app that evaluates a resume against a job description and generates a highly accurate ATS score, mimicking real-world hiring systems used by MNCs and startups (Tier 1/2/3).
+
+2. 🎯 Problem Statement
+
+Most candidates:
+
+Don’t know why their resumes get rejected
+Lack clarity on ATS optimization
+Use inaccurate or generic tools
+
+Gap: Existing ATS tools are either:
+
+Too generic (keyword matching only)
+Not aligned with real hiring workflows
+3. 💡 Solution
+
+A precise ATS scoring engine that:
+
+Parses resume + job description
+Simulates real ATS logic:
+Keyword match
+Semantic relevance
+Role alignment
+Experience validation
+Skill density
+Provides actionable feedback
+4. 🚀 Goals & Success Metrics
+Primary Goals
+Deliver realistic ATS score (0–100)
+Provide clear improvement suggestions
+Ensure fast (<3 sec) evaluation
+Success Metrics
+% users improving score after edits
+Session completion rate
+Resume re-upload rate
+Avg. time spent on results page
+5. 👤 User Flow
+Core Flow
+Landing Page → CTA (“Check ATS Score”)
+Upload Resume (PDF/DOCX)
+Paste Job Description
+Click Single CTA Button (no duplicates)
+Processing Screen (animated)
+Results Dashboard
+6. 🧩 Features
+6.1 Resume Upload
+Accept: PDF, DOCX
+File size validation
+Extract structured data
+6.2 Job Description Input
+Text area with character limit
+Auto-format cleanup
+6.3 ATS Scoring Engine
+Score Breakdown:
+Keyword Match (30%)
+Semantic Match (20%)
+Skills Alignment (20%)
+Experience Relevance (15%)
+Formatting & Readability (15%)
+6.4 Results Dashboard
+Components:
+🎯 ATS Score (0–100)
+📊 Section-wise breakdown
+📌 Missing keywords
+🔍 Resume gaps
+🛠 Suggestions
+6.5 Suggestions Engine
+Add missing keywords
+Improve bullet points
+Optimize structure
+Suggest role-specific changes
+6.6 Authentication (Supabase Auth)
+Email login
+Save history
+Track improvements
+7. 🖥️ UI/UX Requirements
+Design System
+TailwindCSS + shadcn/ui
+Minimal, modern, SaaS feel
+Landing Page (MUST include animations)
+Sections:
+Hero Section
+Features
+How it Works
+Testimonials (optional)
+CTA
+Animations (MANDATORY):
+Scroll animations (fade, slide)
+Parallax effects (hero + sections)
+Smooth transitions using Framer Motion + motion.div
+App UI Animations
+Loading animations during processing
+Smooth transitions between steps
+Animated score reveal
+Micro-interactions (hover, click)
+⚠️ Constraint
+❌ NO duplicate buttons for same functionality
+(One clear CTA per action)
+8. 🏗️ Tech Stack
+Frontend
+Next.js (App Router)
+Tailwind CSS
+shadcn/ui
+Framer Motion (motion.div)
+Zustand (state management)
+Backend
+Supabase (DB + Auth + Storage)
+Drizzle ORM
+Zod (validation)
+AI / Processing Layer
+Resume parsing
+Keyword extraction
+Semantic similarity
+Rule-based ATS scoring
+9. 🧪 Validation & Error Handling
+Input Validation (Zod)
+File type validation
+JD length validation
+Empty input prevention
+Edge Cases
+Empty resume
+Poor formatting
+Non-English text
+System Validation
+Ensure scoring always returns:
+Score
+Feedback
+Suggestions
+10. 📊 Data Model (Simplified)
+Users
+id
+email
+created_at
+Resumes
+id
+user_id
+file_url
+parsed_content
+Evaluations
+id
+resume_id
+jd_text
+ats_score
+breakdown (JSON)
+suggestions (JSON)
+11. 🔐 Security
+Supabase Auth (JWT)
+File upload validation
+Rate limiting (future)
+Secure storage
+12. ⚡ Performance Requirements
+Evaluation time: < 3 seconds
+Lazy loading for UI
+Optimized animations
+13. 🧭 SEO Strategy
+Blog pages (resume tips)
+Keyword targeting:
+“ATS resume checker”
+“resume score tool”
+Server-side rendering (Next.js)
+14. 📦 MVP Scope
+Must Have:
+Resume upload
+JD input
+ATS score
+Suggestions
+Auth
+Animated UI
+Nice to Have:
+Resume rewrite AI
+Keyword auto-insert
+Export optimized resume
+15. 🔄 Future Enhancements
+AI resume builder
+Recruiter dashboard
+Job matching engine
+Chrome extension
+16. ✅ Build Validation Checklist (POST-DEVELOPMENT)
+
+After building, verify:
+
+Functional Validation
+✔ Resume upload works (PDF/DOCX)
+✔ JD input processed correctly
+✔ ATS score generated accurately
+✔ Suggestions are meaningful
+UI Validation
+✔ No duplicate buttons
+✔ Clear CTA flow
+✔ Responsive design
+Animation Validation (MANDATORY)
+✔ Scroll animations implemented
+✔ Parallax effects working
+✔ Smooth page transitions
+✔ Loading animations visible
+Performance Validation
+✔ Fast response time
+✔ No UI lag during animations
+Security Validation
+✔ Auth working
+✔ File uploads secure
+✔ Input sanitized (Zod)
+17. 🧱 Architecture Summary
+Frontend (Next.js)
+   ↓
+State (Zustand)
+   ↓
+API Routes
+   ↓
+Supabase (DB + Auth + Storage)
+   ↓
+Scoring Engine (AI + Rule Logic)
+18. 🎨 UX Principles
+Single-action clarity (no duplicate buttons)
+Instant feedback
+Visual scoring emphasis
+Clean + distraction-free UI
+19. 🧪 Example User Output
+ATS Score: 72%
+
+Breakdown:
+- Keywords: 80%
+- Skills: 65%
+- Experience: 70%
+- Formatting: 75%
+
+Suggestions:
+- Add “REST APIs”, “Microservices”
+- Improve project descriptions
+- Include measurable impact
+20. 🔚 Conclusion
+
+This product focuses on:
+
+Accuracy over gimmicks
+Real-world hiring alignment
+High-quality UX with animations

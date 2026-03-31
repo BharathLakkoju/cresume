@@ -1,0 +1,269 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Home,
+  Plus,
+  BarChart3,
+  Settings,
+  LogOut,
+  User as UserIcon,
+} from "lucide-react";
+import type { Route } from "next";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
+
+import { cn } from "@/lib/utils";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+
+const navItems: Array<{
+  label: string;
+  href: Route;
+  icon: typeof Home;
+}> = [
+  { label: "HOME",    href: "/app"           as Route, icon: Home     },
+  { label: "UPLOAD",  href: "/app/upload"   as Route, icon: Plus     },
+  { label: "RESULTS", href: "/app/analysis" as Route, icon: BarChart3 },
+  { label: "PROFILE", href: "/app/settings" as Route, icon: UserIcon  },
+];
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+
+    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) =>
+      setUser(data.user)
+    );
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        setUser(session?.user ?? null);
+      }
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    router.push("/");
+  };
+
+  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : "—";
+
+  const isActive = (href: Route) =>
+    pathname === href || (href !== "/app" && pathname.startsWith(href));
+
+  return (
+    <>
+      {/* ── Desktop sidebar (lg+) ─────────────────────────────────────── */}
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-[hsl(var(--border)/0.08)] bg-surface-base lg:flex">
+        {/* User Section */}
+        <div className="p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-highest">
+              <span className="text-sm font-semibold text-muted-foreground">
+                {initials}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="label-sm font-semibold text-foreground truncate">
+                {user
+                  ? user.email?.split("@")[0].toUpperCase()
+                  : "PRECISION PORTAL"}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {user ? "SIGNED IN" : "FREE TIER"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav Items */}
+        <nav className="flex-1 space-y-1 px-3">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200",
+                  active
+                    ? "bg-foreground text-primary-foreground font-medium"
+                    : "text-muted-foreground hover:bg-surface-low hover:text-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span className="label-sm">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom Items */}
+        <div className="space-y-1 border-t border-[hsl(var(--border)/0.08)] p-3">
+          <Link
+            href={"/app/settings" as Route}
+            className={cn(
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors duration-200",
+              isActive("/app/settings" as Route)
+                ? "bg-foreground text-primary-foreground font-medium"
+                : "text-muted-foreground hover:bg-surface-low hover:text-foreground",
+            )}
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </Link>
+
+          {user && (
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
+            </button>
+          )}
+        </div>
+      </aside>
+
+      {/* ── Mobile top bar (< lg) ─────────────────────────────────────── */}
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 border-b border-[hsl(var(--border)/0.08)] bg-surface-base lg:hidden">
+        <span className="font-display text-base font-bold tracking-tight text-foreground">
+          ATS Precision
+        </span>
+        {user ? (
+          <MobileUserMenu initials={initials} onSignOut={handleSignOut} />
+        ) : (
+          <Button size="sm" asChild>
+            <Link href="/auth">Get Started</Link>
+          </Button>
+        )}
+      </div>
+
+      {/* ── Mobile bottom tab bar (< lg) ─────────────────────────────── */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-[hsl(var(--border)/0.08)] bg-surface-base px-1 lg:hidden">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href);
+          const isUpload = item.label === "UPLOAD";
+
+          if (isUpload) {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
+                  active ? "-mt-4" : ""
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex items-center justify-center rounded-full transition-all duration-200",
+                    active
+                      ? "h-12 w-12 bg-foreground shadow-panel"
+                      : "h-8 w-8 bg-surface-highest",
+                  )}
+                >
+                  <Plus className={cn(
+                    "transition-all duration-200",
+                    active ? "h-5 w-5 text-primary-foreground" : "h-4 w-4 text-muted-foreground"
+                  )} />
+                </span>
+                <span
+                  className={cn(
+                    "text-[9px] font-semibold uppercase tracking-widest mt-0.5",
+                    active ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          }
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors"
+            >
+              <span
+                className={cn(
+                  "flex items-center justify-center rounded-full px-3 py-1.5 transition-colors",
+                  active ? "bg-foreground" : "",
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-5 w-5 transition-colors",
+                    active ? "text-primary-foreground" : "text-muted-foreground",
+                  )}
+                />
+              </span>
+              <span
+                className={cn(
+                  "text-[9px] font-semibold uppercase tracking-widest",
+                  active ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+    </>
+  );
+}
+
+function MobileUserMenu({
+  initials,
+  onSignOut,
+}: {
+  initials: string;
+  onSignOut: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-surface-highest text-sm font-semibold text-muted-foreground transition-colors hover:bg-surface-low"
+      >
+        {initials}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-11 z-50 w-44 rounded-xl border border-[hsl(var(--border)/0.15)] bg-surface-lowest p-1.5 shadow-ambient">
+            <button
+              onClick={() => {
+                setOpen(false);
+                onSignOut();
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
