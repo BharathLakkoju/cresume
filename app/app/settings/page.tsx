@@ -55,7 +55,10 @@ export default function SettingsPage() {
     setSettings(loadSettings());
   }, []);
 
-  function update<K extends keyof SettingsState>(key: K, value: SettingsState[K]) {
+  function update<K extends keyof SettingsState>(
+    key: K,
+    value: SettingsState[K],
+  ) {
     setSettings((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
   }
@@ -74,15 +77,15 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10">
+    <div className="p-4 sm:p-6 lg:p-10">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl"
+        className="mx-auto max-w-2xl"
       >
         <p className="label-sm text-muted-foreground">CONFIGURATION</p>
-        <h1 className="mt-3 font-display text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="mt-3 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Settings
         </h1>
         <p className="mt-4 text-base leading-7 text-muted-foreground">
@@ -94,7 +97,9 @@ export default function SettingsPage() {
           <section>
             <div className="flex items-center gap-2 mb-5">
               <Cpu className="h-4 w-4 text-muted-foreground" />
-              <h2 className="label-sm font-semibold text-foreground">ANALYSIS ENGINE</h2>
+              <h2 className="label-sm font-semibold text-foreground">
+                ANALYSIS ENGINE
+              </h2>
             </div>
             <div className="space-y-5">
               <SegmentField
@@ -105,7 +110,9 @@ export default function SettingsPage() {
                   { value: "quick", label: "Quick", sub: "~2s" },
                   { value: "thorough", label: "Thorough", sub: "~5s" },
                 ]}
-                onChange={(v) => update("analysisDepth", v as SettingsState["analysisDepth"])}
+                onChange={(v) =>
+                  update("analysisDepth", v as SettingsState["analysisDepth"])
+                }
               />
               <SegmentField
                 label="Response Style"
@@ -115,7 +122,9 @@ export default function SettingsPage() {
                   { value: "concise", label: "Concise", sub: "Key points" },
                   { value: "detailed", label: "Detailed", sub: "Full context" },
                 ]}
-                onChange={(v) => update("responseStyle", v as SettingsState["responseStyle"])}
+                onChange={(v) =>
+                  update("responseStyle", v as SettingsState["responseStyle"])
+                }
               />
               <SegmentField
                 label="Keyword Weighting"
@@ -126,7 +135,12 @@ export default function SettingsPage() {
                   { value: "balanced", label: "Balanced", sub: "Flexible" },
                   { value: "lenient", label: "Lenient", sub: "Broad" },
                 ]}
-                onChange={(v) => update("keywordWeighting", v as SettingsState["keywordWeighting"])}
+                onChange={(v) =>
+                  update(
+                    "keywordWeighting",
+                    v as SettingsState["keywordWeighting"],
+                  )
+                }
               />
             </div>
           </section>
@@ -135,7 +149,9 @@ export default function SettingsPage() {
           <section>
             <div className="flex items-center gap-2 mb-5">
               <Settings className="h-4 w-4 text-muted-foreground" />
-              <h2 className="label-sm font-semibold text-foreground">SCORE COMPONENTS</h2>
+              <h2 className="label-sm font-semibold text-foreground">
+                SCORE COMPONENTS
+              </h2>
             </div>
             <div className="space-y-4">
               <ToggleField
@@ -157,7 +173,9 @@ export default function SettingsPage() {
           <section>
             <div className="flex items-center gap-2 mb-5">
               <User className="h-4 w-4 text-muted-foreground" />
-              <h2 className="label-sm font-semibold text-foreground">OUTPUT TONE</h2>
+              <h2 className="label-sm font-semibold text-foreground">
+                OUTPUT TONE
+              </h2>
             </div>
             <SegmentField
               label="Suggestion Tone"
@@ -167,7 +185,9 @@ export default function SettingsPage() {
                 { value: "formal", label: "Formal", sub: "Professional" },
                 { value: "casual", label: "Casual", sub: "Conversational" },
               ]}
-              onChange={(v) => update("tonePreference", v as SettingsState["tonePreference"])}
+              onChange={(v) =>
+                update("tonePreference", v as SettingsState["tonePreference"])
+              }
             />
           </section>
         </div>
@@ -213,7 +233,7 @@ function SegmentField({
         <p className="text-sm font-medium text-foreground">{label}</p>
         <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
       </div>
-      <div className="inline-flex shrink-0 rounded-xl bg-surface-low p-1 gap-0.5">
+      <div className="inline-flex shrink-0 bg-surface-low p-1 gap-0.5">
         {options.map((opt) => {
           const isActive = value === opt.value;
           return (
@@ -221,19 +241,23 @@ function SegmentField({
               key={opt.value}
               type="button"
               onClick={() => onChange(opt.value)}
-              className="relative px-3 py-2 rounded-lg transition-colors duration-200"
+              className="relative px-3 py-2 transition-all duration-200 ease-out"
             >
               {isActive && (
                 <motion.div
                   layoutId={`seg-${label}`}
-                  className="absolute inset-0 rounded-lg bg-foreground"
+                  className="absolute inset-0 bg-foreground"
                   transition={{ type: "spring", stiffness: 400, damping: 35 }}
                 />
               )}
-              <span className={`relative z-10 text-xs font-semibold block transition-colors ${isActive ? "text-white" : "text-muted-foreground"}`}>
+              <span
+                className={`relative z-10 text-xs font-semibold block transition-colors ${isActive ? "text-white" : "text-muted-foreground"}`}
+              >
                 {opt.label}
               </span>
-              <span className={`relative z-10 text-[10px] block transition-colors ${isActive ? "text-white/70" : "text-muted-foreground/60"}`}>
+              <span
+                className={`relative z-10 text-[10px] block transition-colors ${isActive ? "text-white/70" : "text-muted-foreground/60"}`}
+              >
                 {opt.sub}
               </span>
             </button>
@@ -266,11 +290,11 @@ function ToggleField({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-foreground ${checked ? "bg-foreground" : "bg-surface-highest"}`}
+        className={`relative mt-0.5 h-6 w-11 shrink-0 cursor-pointer transition-colors duration-200 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-foreground ${checked ? "bg-foreground" : "bg-surface-highest"}`}
       >
         <motion.span
           layout
-          className="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm"
+          className="absolute top-0.5 left-0.5 h-5 w-5 bg-white shadow-sm"
           animate={{ x: checked ? 20 : 0 }}
           transition={{ type: "spring", stiffness: 500, damping: 35 }}
         />

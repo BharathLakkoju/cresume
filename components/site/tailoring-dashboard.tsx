@@ -73,149 +73,219 @@ function severityColor(s: string) {
   return "bg-surface-low text-muted-foreground";
 }
 
-/** Build an HTML string for the resume — used for the print-PDF window */
-function buildResumeHTML(r: TailoredResume): string {
-  const contact = [
-    r.contact?.email,
-    r.contact?.phone,
-    r.contact?.location,
-    r.contact?.linkedin
-      ? `<a href="${r.contact.linkedin}" style="color:#111">${r.contact.linkedin}</a>`
-      : "",
-    r.contact?.github
-      ? `<a href="${r.contact.github}" style="color:#111">${r.contact.github}</a>`
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" &nbsp;·&nbsp; ");
-
-  const experienceHTML = (r.experience ?? [])
-    .map(
-      (exp) => `
-    <div style="margin-bottom:14px">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <span style="font-weight:700">${exp.company}</span>
-        <span style="font-size:11px;color:#666">${exp.dates}</span>
-      </div>
-      <div style="font-style:italic;font-size:12px;color:#444;margin-bottom:4px">${exp.title}${exp.location ? " — " + exp.location : ""}</div>
-      <ul style="margin:4px 0 0 16px;padding:0">${(exp.bullets ?? []).map((b) => `<li style="font-size:12px;line-height:1.65;margin-bottom:2px">${b}</li>`).join("")}</ul>
-    </div>`,
-    )
-    .join("");
-
-  const skillsHTML = (r.skills ?? [])
-    .map(
-      (s) =>
-        `<div style="margin-bottom:5px"><span style="font-weight:600;font-size:12px">${s.category}:</span> <span style="font-size:12px">${(s.items ?? []).join(", ")}</span></div>`,
-    )
-    .join("");
-
-  const projectsHTML = (r.projects ?? [])
-    .map(
-      (p) => `
-    <div style="margin-bottom:12px">
-      <div style="font-weight:700;font-size:12px">${p.name}${p.tech ? ` <span style="font-weight:400;color:#555">— ${p.tech}</span>` : ""}${p.link ? ` <a href="${p.link}" style="color:#111;font-size:11px">[link]</a>` : ""}</div>
-      <ul style="margin:4px 0 0 16px;padding:0">${(p.bullets ?? []).map((b) => `<li style="font-size:12px;line-height:1.65;margin-bottom:2px">${b}</li>`).join("")}</ul>
-    </div>`,
-    )
-    .join("");
-
-  const educationHTML = (r.education ?? [])
-    .map(
-      (e) => `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
-      <div><span style="font-weight:700;font-size:12px">${e.institution}</span><span style="font-size:12px;color:#555"> — ${e.degree}</span></div>
-      <div style="font-size:11px;color:#666">${e.year}${e.gpa ? " · " + e.gpa : ""}</div>
-    </div>`,
-    )
-    .join("");
-
-  const certsHTML =
-    (r.certifications ?? []).length > 0
-      ? `<p style="font-size:12px">${(r.certifications ?? []).join(" &nbsp;·&nbsp; ")}</p>`
-      : "";
-
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>${r.name ?? "Resume"} — Tailored Resume</title>
-<style>
-  body{font-family:"Times New Roman",Georgia,serif;max-width:760px;margin:40px auto;color:#111;line-height:1.4}
-  h1{font-size:22px;font-weight:700;margin:0 0 4px}
-  .contact{font-size:11px;color:#555;margin-bottom:18px}
-  h2{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-bottom:1.5px solid #111;padding-bottom:3px;margin:18px 0 10px}
-  @media print{body{margin:20px}button{display:none}}
-</style></head><body>
-<h1>${r.name ?? ""}</h1>
-<div class="contact">${contact}</div>
-${r.summary ? `<h2>Professional Summary</h2><p style="font-size:12px;line-height:1.7">${r.summary}</p>` : ""}
-${experienceHTML ? `<h2>Experience</h2>${experienceHTML}` : ""}
-${skillsHTML ? `<h2>Skills</h2>${skillsHTML}` : ""}
-${projectsHTML ? `<h2>Projects</h2>${projectsHTML}` : ""}
-${educationHTML ? `<h2>Education</h2>${educationHTML}` : ""}
-${certsHTML ? `<h2>Certifications</h2>${certsHTML}` : ""}
-</body></html>`;
-}
-
 /* ─────────────────────────────────── download helpers ── */
 
 async function downloadPDF(r: TailoredResume) {
-  // Dynamically import jsPDF and html2canvas
   const { default: jsPDF } = await import("jspdf");
-  const { default: html2canvas } = await import("html2canvas");
 
-  // Create an off-screen container with the resume HTML
-  const container = document.createElement("div");
-  container.innerHTML = buildResumeHTML(r);
-  container.style.position = "absolute";
-  container.style.left = "-9999px";
-  container.style.top = "0";
-  container.style.width = "794px"; // ~A4 width at 96dpi
-  document.body.appendChild(container);
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const margin = 14;
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const contentW = pageW - margin * 2;
+  let y = margin;
 
-  // Wait for the HTML to render
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  try {
-    // Get the body inside the iframe-like container
-    const body = container.querySelector("body") ?? container;
-
-    const canvas = await html2canvas(body as HTMLElement, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      width: 794,
-      windowWidth: 794,
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pdfWidth - 20; // 10mm margins
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let yPosition = 10;
-    let heightRemaining = imgHeight;
-
-    // Add pages as needed for long resumes
-    while (heightRemaining > 0) {
-      pdf.addImage(imgData, "PNG", 10, yPosition, imgWidth, imgHeight);
-      heightRemaining -= pdfHeight - 20;
-      if (heightRemaining > 0) {
-        pdf.addPage();
-        yPosition = -((imgHeight - heightRemaining) - 10);
-      }
+  const ensureSpace = (need: number) => {
+    if (y + need > pageH - margin) {
+      pdf.addPage();
+      y = margin;
     }
+  };
 
-    const fileName = `${(r.name ?? "Resume").replace(/\s+/g, "_")}_Tailored.pdf`;
-    pdf.save(fileName);
-  } finally {
-    document.body.removeChild(container);
+  const addText = (
+    text: string,
+    opts: {
+      bold?: boolean;
+      italic?: boolean;
+      size?: number;
+      color?: number;
+      x?: number;
+    } = {},
+  ) => {
+    const {
+      bold = false,
+      italic = false,
+      size = 10,
+      color = 0,
+      x = margin,
+    } = opts;
+    pdf.setFont(
+      "helvetica",
+      bold && italic
+        ? "bolditalic"
+        : bold
+          ? "bold"
+          : italic
+            ? "italic"
+            : "normal",
+    );
+    pdf.setFontSize(size);
+    pdf.setTextColor(color, color, color);
+    const lines = pdf.splitTextToSize(text, contentW - (x - margin));
+    lines.forEach((line: string) => {
+      ensureSpace(size * 0.4 + 1);
+      pdf.text(line, x, y);
+      y += size * 0.4 + 1;
+    });
+    pdf.setTextColor(0, 0, 0);
+  };
+
+  const addRightText = (text: string, baseY: number, size = 9, color = 100) => {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(size);
+    pdf.setTextColor(color, color, color);
+    const w = pdf.getTextWidth(text);
+    pdf.text(text, pageW - margin - w, baseY);
+    pdf.setTextColor(0, 0, 0);
+  };
+
+  const addSection = (title: string) => {
+    ensureSpace(10);
+    y += 2;
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text(title.toUpperCase(), margin, y);
+    y += 1.5;
+    pdf.setDrawColor(0);
+    pdf.setLineWidth(0.25);
+    pdf.line(margin, y, pageW - margin, y);
+    y += 3.5;
+  };
+
+  // ── Name ──
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(18);
+  const nameW = pdf.getTextWidth(r.name ?? "");
+  pdf.text(r.name ?? "", (pageW - nameW) / 2, y);
+  y += 8;
+
+  // ── Contact ──
+  const contactParts = [
+    r.contact?.email,
+    r.contact?.phone,
+    r.contact?.location,
+    r.contact?.linkedin,
+    r.contact?.github,
+  ].filter(Boolean) as string[];
+  if (contactParts.length > 0) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(80, 80, 80);
+    const contactStr = contactParts.join("  ·  ");
+    const cLines = pdf.splitTextToSize(contactStr, contentW);
+    cLines.forEach((line: string) => {
+      const lw = pdf.getTextWidth(line);
+      pdf.text(line, (pageW - lw) / 2, y);
+      y += 4.5;
+    });
+    pdf.setTextColor(0, 0, 0);
+    y += 1;
   }
+
+  // ── Summary ──
+  if (r.summary) {
+    addSection("Professional Summary");
+    addText(r.summary, { size: 10 });
+    y += 1;
+  }
+
+  // ── Experience ──
+  if ((r.experience ?? []).length > 0) {
+    addSection("Experience");
+    for (const exp of r.experience ?? []) {
+      ensureSpace(12);
+      const rowY = y;
+      addText(exp.company, { bold: true, size: 11 });
+      addRightText(exp.dates, rowY, 9, 100);
+      addText(`${exp.title}${exp.location ? " — " + exp.location : ""}`, {
+        italic: true,
+        size: 10,
+      });
+      for (const bullet of exp.bullets ?? []) {
+        const bulletLines = pdf.splitTextToSize(bullet, contentW - 5);
+        bulletLines.forEach((line: string, i: number) => {
+          ensureSpace(5);
+          pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(10);
+          pdf.text(i === 0 ? "•" : " ", margin, y);
+          pdf.text(line, margin + 4, y);
+          y += 4.5;
+        });
+      }
+      y += 2;
+    }
+  }
+
+  // ── Skills ──
+  if ((r.skills ?? []).length > 0) {
+    addSection("Skills");
+    for (const s of r.skills ?? []) {
+      ensureSpace(6);
+      const label = `${s.category}: `;
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      const labelW = pdf.getTextWidth(label);
+      pdf.text(label, margin, y);
+      pdf.setFont("helvetica", "normal");
+      const itemsStr = (s.items ?? []).join(", ");
+      const itemLines = pdf.splitTextToSize(itemsStr, contentW - labelW);
+      itemLines.forEach((line: string, i: number) => {
+        if (i === 0) {
+          pdf.text(line, margin + labelW, y);
+          y += 4.5;
+        } else {
+          ensureSpace(5);
+          pdf.text(line, margin + labelW, y);
+          y += 4.5;
+        }
+      });
+    }
+    y += 1;
+  }
+
+  // ── Projects ──
+  if ((r.projects ?? []).length > 0) {
+    addSection("Projects");
+    for (const p of r.projects ?? []) {
+      ensureSpace(10);
+      const projTitle = `${p.name}${p.tech ? " — " + p.tech : ""}`;
+      addText(projTitle, { bold: true, size: 11 });
+      for (const b of p.bullets ?? []) {
+        const bulletLines = pdf.splitTextToSize(b, contentW - 5);
+        bulletLines.forEach((line: string, i: number) => {
+          ensureSpace(5);
+          pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(10);
+          pdf.text(i === 0 ? "•" : " ", margin, y);
+          pdf.text(line, margin + 4, y);
+          y += 4.5;
+        });
+      }
+      y += 2;
+    }
+  }
+
+  // ── Education ──
+  if ((r.education ?? []).length > 0) {
+    addSection("Education");
+    for (const e of r.education ?? []) {
+      ensureSpace(10);
+      const rowY = y;
+      addText(e.institution, { bold: true, size: 11 });
+      addRightText(`${e.year}${e.gpa ? " · " + e.gpa : ""}`, rowY, 9, 100);
+      addText(e.degree, { italic: true, size: 10 });
+      y += 2;
+    }
+  }
+
+  // ── Certifications ──
+  if ((r.certifications ?? []).length > 0) {
+    addSection("Certifications");
+    addText((r.certifications ?? []).join("  ·  "), { size: 10 });
+  }
+
+  pdf.save(`${(r.name ?? "Resume").replace(/\s+/g, "_")}_Tailored.pdf`);
 }
 
 async function downloadDOCX(r: TailoredResume) {
@@ -252,7 +322,9 @@ async function downloadDOCX(r: TailoredResume) {
   if (contactLine) {
     children.push(
       new Paragraph({
-        children: [new TextRun({ text: contactLine, size: 18, color: "555555" })],
+        children: [
+          new TextRun({ text: contactLine, size: 18, color: "555555" }),
+        ],
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 },
       }),
@@ -344,7 +416,13 @@ async function downloadDOCX(r: TailoredResume) {
           children: [
             new TextRun({ text: p.name, bold: true, size: 22 }),
             ...(p.tech
-              ? [new TextRun({ text: `  — ${p.tech}`, size: 18, color: "555555" })]
+              ? [
+                  new TextRun({
+                    text: `  — ${p.tech}`,
+                    size: 18,
+                    color: "555555",
+                  }),
+                ]
               : []),
           ],
         }),
@@ -369,7 +447,11 @@ async function downloadDOCX(r: TailoredResume) {
         new Paragraph({
           children: [
             new TextRun({ text: e.institution, bold: true, size: 22 }),
-            new TextRun({ text: `  ${e.year}${e.gpa ? " · " + e.gpa : ""}`, size: 18, color: "666666" }),
+            new TextRun({
+              text: `  ${e.year}${e.gpa ? " · " + e.gpa : ""}`,
+              size: 18,
+              color: "666666",
+            }),
           ],
         }),
       );
@@ -387,7 +469,12 @@ async function downloadDOCX(r: TailoredResume) {
     children.push(sectionHeading("Certifications"));
     children.push(
       new Paragraph({
-        children: [new TextRun({ text: (r.certifications ?? []).join("  ·  "), size: 20 })],
+        children: [
+          new TextRun({
+            text: (r.certifications ?? []).join("  ·  "),
+            size: 20,
+          }),
+        ],
       }),
     );
   }
@@ -429,7 +516,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="rounded-2xl bg-foreground p-6 sm:p-8 text-primary-foreground"
+        className="bg-foreground p-6 sm:p-8 text-primary-foreground"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -443,11 +530,17 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
                 : `${changes.length} improvements applied · ready to download`}
             </p>
             {result.atsScore != null && (
-              <div className="mt-4 inline-flex items-center gap-3 rounded-xl bg-white/10 px-4 py-2.5">
-                <span className="font-display text-3xl font-black text-white">{result.atsScore}%</span>
+              <div className="mt-4 inline-flex items-center gap-3 bg-white/10 px-4 py-2.5">
+                <span className="font-display text-3xl font-black text-white">
+                  {result.atsScore}%
+                </span>
                 <div>
-                  <p className="text-xs font-semibold text-white/80">ATS MATCH SCORE</p>
-                  <p className="text-[10px] text-white/50">Predicted keyword match</p>
+                  <p className="text-xs font-semibold text-white/80">
+                    ATS MATCH SCORE
+                  </p>
+                  <p className="text-[10px] text-white/50">
+                    Predicted keyword match
+                  </p>
                 </div>
               </div>
             )}
@@ -497,13 +590,13 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
       </motion.div>
 
       {/* ── Tabs ────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 rounded-xl bg-surface-low p-1">
+      <div className="flex gap-1 bg-surface-low p-1">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex-1 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors",
+              "flex-1 px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ease-out",
               tab === t.id
                 ? "bg-foreground text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground",
@@ -523,7 +616,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="lg:max-h-[70vh] lg:overflow-y-auto lg:rounded-2xl"
+            className="lg:max-h-[70vh] lg:overflow-y-auto"
           >
             <ResumePreview resume={resume} />
           </motion.div>
@@ -547,7 +640,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
             {issues.map((issue, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-surface-highest bg-surface-lowest p-5"
+                className="border border-surface-highest bg-surface-lowest p-5"
               >
                 <div className="flex items-start gap-3">
                   <AlertTriangle
@@ -567,7 +660,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
                       </span>
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                          "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
                           severityColor(issue.severity),
                         )}
                       >
@@ -596,7 +689,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
                   </button>
                 </div>
                 {expandedIssues.has(i) && (
-                  <div className="mt-3 ml-7 rounded-lg bg-surface-low p-3">
+                  <div className="mt-3 ml-7 bg-surface-low p-3">
                     <p className="text-xs text-muted-foreground">
                       This issue has been fixed in the tailored resume shown in
                       the <strong>Tailored Resume</strong> tab.
@@ -629,10 +722,10 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="rounded-xl border border-surface-highest bg-surface-lowest p-5"
+                className="border border-surface-highest bg-surface-lowest p-5"
               >
                 <div className="flex items-start gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-primary-foreground">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-foreground text-primary-foreground">
                     <Layers className="h-3.5 w-3.5" />
                   </div>
                   <div>
@@ -670,14 +763,16 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
     .join("  ·  ");
 
   return (
-    <div className="rounded-2xl border border-surface-highest bg-white p-6 sm:p-10 shadow-ambient">
+    <div className="border border-surface-highest bg-white p-6 sm:p-10 shadow-ambient">
       {/* Name + contact */}
       <div className="border-b border-gray-200 pb-5 text-center">
         <h1 className="font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
           {resume.name}
         </h1>
         {contact && (
-          <p className="mt-1 text-xs text-gray-500 wrap-break-word">{contact}</p>
+          <p className="mt-1 text-xs text-gray-500 wrap-break-word">
+            {contact}
+          </p>
         )}
       </div>
 
@@ -695,7 +790,9 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
             {(resume.experience ?? []).map((exp, i) => (
               <div key={i}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-                  <span className="font-semibold text-gray-900">{exp.company}</span>
+                  <span className="font-semibold text-gray-900">
+                    {exp.company}
+                  </span>
                   <span className="text-xs text-gray-500">{exp.dates}</span>
                 </div>
                 <p className="text-sm italic text-gray-600">
@@ -724,8 +821,12 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
           <div className="space-y-2">
             {(resume.skills ?? []).map((s, i) => (
               <div key={i} className="flex flex-wrap gap-x-1 text-sm">
-                <span className="font-semibold text-gray-900">{s.category}:</span>
-                <span className="text-gray-700">{(s.items ?? []).join(", ")}</span>
+                <span className="font-semibold text-gray-900">
+                  {s.category}:
+                </span>
+                <span className="text-gray-700">
+                  {(s.items ?? []).join(", ")}
+                </span>
               </div>
             ))}
           </div>
@@ -756,7 +857,10 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
                 </div>
                 <ul className="mt-1.5 space-y-1.5 pl-4">
                   {(p.bullets ?? []).map((b, j) => (
-                    <li key={j} className="list-disc text-sm leading-6 text-gray-700">
+                    <li
+                      key={j}
+                      className="list-disc text-sm leading-6 text-gray-700"
+                    >
                       {b}
                     </li>
                   ))}
@@ -772,9 +876,14 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
         <ResumeSection title="Education">
           <div className="space-y-3">
             {(resume.education ?? []).map((e, i) => (
-              <div key={i} className="flex flex-wrap items-baseline justify-between gap-x-2">
+              <div
+                key={i}
+                className="flex flex-wrap items-baseline justify-between gap-x-2"
+              >
                 <div>
-                  <span className="font-semibold text-gray-900">{e.institution}</span>
+                  <span className="font-semibold text-gray-900">
+                    {e.institution}
+                  </span>
                   <span className="text-sm text-gray-600"> — {e.degree}</span>
                 </div>
                 <span className="text-xs text-gray-500">
@@ -794,7 +903,7 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
             {(resume.certifications ?? []).map((c, i) => (
               <span
                 key={i}
-                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                className="bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
               >
                 {c}
               </span>
@@ -807,7 +916,8 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
       <div className="mt-8 flex flex-col items-center gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-center">
         <CheckCircle2 className="h-4 w-4 text-foreground" />
         <span className="text-sm text-muted-foreground">
-          Use the <strong>PDF</strong> or <strong>DOCX</strong> buttons above to download this resume.
+          Use the <strong>PDF</strong> or <strong>DOCX</strong> buttons above to
+          download this resume.
         </span>
       </div>
     </div>
