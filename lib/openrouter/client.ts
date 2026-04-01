@@ -17,6 +17,9 @@ const DEFAULT_MODEL = process.env.OPENROUTER_MODEL ?? "qwen/qwen3-235b-a22b:free
 /** Retry config */
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1500;
+const MAX_TIMEOUT_MS = 240_000;
+const MIN_TIMEOUT_MS = 30_000;
+const MIN_MAX_TOKENS = 3000;
 
 /**
  * Simple exponential backoff sleep.
@@ -46,6 +49,7 @@ export async function callOpenRouter(
   }
 
   let lastError: Error | null = null;
+  let requestMaxTokens = maxTokens;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     if (attempt > 0) {
@@ -54,8 +58,14 @@ export async function callOpenRouter(
       await sleep(delay);
     }
 
+    // Increase timeout on subsequent attempts for large prompts and slower models.
+    const attemptTimeoutMs = Math.max(
+      MIN_TIMEOUT_MS,
+      Math.min(timeoutMs + attempt * 30_000, MAX_TIMEOUT_MS)
+    );
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
 
     try {
       const response = await fetch(OPENROUTER_API_URL, {
@@ -74,7 +84,7 @@ export async function callOpenRouter(
             { role: "user", content: userMessage }
           ],
           temperature: 0.3,
-          max_tokens: maxTokens
+          max_tokens: requestMaxTokens
         })
       });
 
@@ -105,8 +115,14 @@ export async function callOpenRouter(
       return content;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        console.warn("[OpenRouter] Request timed out after", timeoutMs, "ms.");
-        lastError = new Error(`Request timed out after ${timeoutMs}ms`);
+        console.warn("[OpenRouter] Request timed out after", attemptTimeoutMs, "ms.");
+        lastError = new Error(`Request timed out after ${attemptTimeoutMs}ms`);
+
+        // On timeout, shrink generation target for the next retry to improve completion odds.
+        if (requestMaxTokens > MIN_MAX_TOKENS) {
+          requestMaxTokens = Math.max(MIN_MAX_TOKENS, Math.floor(requestMaxTokens * 0.85));
+          console.warn(`[OpenRouter] Reducing max_tokens to ${requestMaxTokens} for retry.`);
+        }
       } else {
         console.error("[OpenRouter] Request failed:", error);
         lastError = error instanceof Error ? error : new Error(String(error));

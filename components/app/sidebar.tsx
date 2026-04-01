@@ -160,44 +160,43 @@ export function Sidebar() {
           const active = isActive(item.href);
           const isUpload = item.label === "UPLOAD";
 
-          if (isUpload) {
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
-                  active ? "-mt-4" : "",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex items-center justify-center transition-all duration-200 ease-out",
-                    active
-                      ? "h-12 w-12 bg-foreground shadow-panel"
-                      : "h-8 w-8 bg-surface-highest",
-                  )}
-                >
-                  <Plus
-                    className={cn(
-                      "transition-all duration-200",
-                      active
-                        ? "h-5 w-5 text-primary-foreground"
-                        : "h-4 w-4 text-muted-foreground",
-                    )}
-                  />
-                </span>
-                <span
-                  className={cn(
-                    "text-[9px] font-semibold uppercase tracking-widest mt-0.5",
-                    active ? "text-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          }
+          // if (isUpload) {
+          //   return (
+          //     <Link
+          //       key={item.href}
+          //       href={item.href}
+          //       className={cn(
+          //         "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
+          //       )}
+          //     >
+          //       <span
+          //         className={cn(
+          //           "flex items-center justify-center transition-all duration-200 ease-out",
+          //           active
+          //             ? "h-5 w-5 bg-foreground shadow-panel"
+          //             : "h-8 w-8 bg-surface-highest",
+          //         )}
+          //       >
+          //         <Plus
+          //           className={cn(
+          //             "transition-all duration-200",
+          //             active
+          //               ? "h-5 w-5 text-primary-foreground"
+          //               : "h-4 w-4 text-muted-foreground",
+          //           )}
+          //         />
+          //       </span>
+          //       <span
+          //         className={cn(
+          //           "text-[9px] font-semibold uppercase tracking-widest mt-0.5",
+          //           active ? "text-foreground" : "text-muted-foreground",
+          //         )}
+          //       >
+          //         {item.label}
+          //       </span>
+          //     </Link>
+          //   );
+          // }
 
           return (
             <Link

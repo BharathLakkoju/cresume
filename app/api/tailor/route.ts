@@ -58,6 +58,11 @@ interface TailoringResult {
  */
 export async function POST(request: Request) {
   const start = Date.now();
+  let anonymousUsageContext: {
+    ip: string;
+    currentCount: number;
+    service: NonNullable<ReturnType<typeof getSupabaseServiceClient>>;
+  } | null = null;
 
   try {
     /* ── 1. Parse multipart form ──────────────────────────────── */
@@ -101,14 +106,12 @@ export async function POST(request: Request) {
           );
         }
 
-        await service.from("ip_usage").upsert(
-          {
-            ip_address: ip,
-            use_count: (row?.use_count ?? 0) + 1,
-            last_used_at: new Date().toISOString()
-          },
-          { onConflict: "ip_address" }
-        );
+        // Defer usage increment until tailoring completes successfully.
+        anonymousUsageContext = {
+          ip,
+          currentCount: row?.use_count ?? 0,
+          service
+        };
       }
     }
 
@@ -144,8 +147,8 @@ export async function POST(request: Request) {
         TAILORING_SYSTEM_PROMPT,
         userMessage,
         undefined,
-        90_000,  // 90s timeout — tailoring produces more content
-        6144     // more tokens for full resume rewrite
+        150_000, // tailoring payloads are large and free models can be slower
+        4600     // keep output rich while avoiding slow oversized generations
       );
     } catch (configError) {
       return NextResponse.json(
@@ -161,6 +164,17 @@ export async function POST(request: Request) {
           retryable: true
         },
         { status: 503 }
+      );
+    }
+
+    if (anonymousUsageContext) {
+      await anonymousUsageContext.service.from("ip_usage").upsert(
+        {
+          ip_address: anonymousUsageContext.ip,
+          use_count: anonymousUsageContext.currentCount + 1,
+          last_used_at: new Date().toISOString()
+        },
+        { onConflict: "ip_address" }
       );
     }
 
