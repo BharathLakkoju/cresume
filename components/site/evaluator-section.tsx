@@ -85,10 +85,7 @@ export function EvaluatorSection() {
         throw new Error(payload.error ?? "Evaluation failed.");
       }
 
-      setLatestResult(
-        payload.result.detectedRole ?? "ATS evaluation",
-        payload.result,
-      );
+      setLatestResult(payload.detectedRole ?? "ATS evaluation", payload);
       setActiveStage(stageCount - 1);
     } catch (submissionError) {
       setError(

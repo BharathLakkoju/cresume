@@ -163,6 +163,11 @@ function serializeResumeData(r: ResumeData): string {
  */
 export async function POST(request: Request) {
   const start = Date.now();
+  let anonymousUsageContext: {
+    ip: string;
+    currentCount: number;
+    service: NonNullable<ReturnType<typeof getSupabaseServiceClient>>;
+  } | null = null;
 
   try {
     /* ── 1. Parse JSON body ──────────────────────────────────── */
@@ -222,14 +227,12 @@ export async function POST(request: Request) {
           );
         }
 
-        await service.from("ip_usage").upsert(
-          {
-            ip_address: ip,
-            use_count: (row?.use_count ?? 0) + 1,
-            last_used_at: new Date().toISOString(),
-          },
-          { onConflict: "ip_address" }
-        );
+        // Defer usage increment until a successful builder response is produced.
+        anonymousUsageContext = {
+          ip,
+          currentCount: row?.use_count ?? 0,
+          service,
+        };
       }
     }
 
@@ -244,8 +247,8 @@ export async function POST(request: Request) {
         TAILORING_SYSTEM_PROMPT,
         userMessage,
         undefined,
-        90_000,
-        6144
+        150_000,
+        4600
       );
     } catch {
       return NextResponse.json(
@@ -258,6 +261,17 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "AI service is temporarily unavailable. Please try again.", retryable: true },
         { status: 503 }
+      );
+    }
+
+    if (anonymousUsageContext) {
+      await anonymousUsageContext.service.from("ip_usage").upsert(
+        {
+          ip_address: anonymousUsageContext.ip,
+          use_count: anonymousUsageContext.currentCount + 1,
+          last_used_at: new Date().toISOString(),
+        },
+        { onConflict: "ip_address" }
       );
     }
 
