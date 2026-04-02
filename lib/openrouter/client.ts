@@ -12,35 +12,37 @@ export interface OpenRouterResponse {
 }
 
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = process.env.OPENROUTER_MODEL ?? "qwen/qwen3-235b-a22b:free";
+const DEFAULT_MODEL = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash-preview-05-20";
+const FALLBACK_MODEL = process.env.OPENROUTER_FALLBACK_MODEL ?? "google/gemini-2.0-flash-001";
 
 /** Retry config */
-const MAX_RETRIES = 2;
+const MAX_RETRIES = 1;     // 2 total attempts max — fail fast
 const RETRY_DELAY_MS = 1500;
-const MAX_TIMEOUT_MS = 240_000;
-const MIN_TIMEOUT_MS = 30_000;
-const MIN_MAX_TOKENS = 3000;
 
 /**
- * Simple exponential backoff sleep.
+ * Simple sleep.
  */
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Calls OpenRouter with the given messages and returns the first choice's content.
- * Includes automatic retry with exponential backoff for transient failures.
+ * Calls OpenRouter using streaming to avoid idle-timeout kills.
+ * Accumulates all chunks and returns the full content string.
  *
- * @throws Error if the API key is missing (caller must handle)
- * Returns null only if all retry attempts fail.
+ * The timeout applies to stalls (no data for `stallTimeoutMs`), not total elapsed time.
+ * This way, a response that takes 20s but streams continuously will succeed,
+ * while a stalled connection is killed quickly.
+ *
+ * @throws Error if the API key is missing
+ * Returns null if all attempts fail.
  */
 export async function callOpenRouter(
   systemPrompt: string,
   userMessage: string,
   model = DEFAULT_MODEL,
-  timeoutMs = 60_000,
-  maxTokens = 4096
+  timeoutMs = 30_000,
+  maxTokens = 3000
 ): Promise<string | null> {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -49,23 +51,21 @@ export async function callOpenRouter(
   }
 
   let lastError: Error | null = null;
-  let requestMaxTokens = maxTokens;
+  const stallTimeoutMs = Math.min(timeoutMs, 15_000); // kill if no data for 15s
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // On retry: wait, then try fallback model
+    const currentModel = attempt === 0 ? model : FALLBACK_MODEL;
+
     if (attempt > 0) {
-      const delay = RETRY_DELAY_MS * Math.pow(2, attempt - 1);
-      console.warn(`[OpenRouter] Retry ${attempt}/${MAX_RETRIES} after ${delay}ms...`);
+      const delay = RETRY_DELAY_MS * attempt;
+      console.warn(`[OpenRouter] Retry ${attempt}/${MAX_RETRIES} with model ${currentModel} after ${delay}ms...`);
       await sleep(delay);
     }
 
-    // Increase timeout on subsequent attempts for large prompts and slower models.
-    const attemptTimeoutMs = Math.max(
-      MIN_TIMEOUT_MS,
-      Math.min(timeoutMs + attempt * 30_000, MAX_TIMEOUT_MS)
-    );
-
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
+    // Hard ceiling: abort after timeoutMs regardless of streaming progress
+    const hardTimeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(OPENROUTER_API_URL, {
@@ -78,13 +78,14 @@ export async function callOpenRouter(
           "X-Title": "ATS Precision"
         },
         body: JSON.stringify({
-          model,
+          model: currentModel,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userMessage }
           ],
           temperature: 0.3,
-          max_tokens: requestMaxTokens
+          max_tokens: maxTokens,
+          stream: true
         })
       });
 
@@ -92,45 +93,86 @@ export async function callOpenRouter(
         const errText = await response.text().catch(() => response.statusText);
         console.error(`[OpenRouter] HTTP ${response.status}: ${errText}`);
 
-        // 429 rate limit or 5xx server errors are retryable
         if (response.status === 429 || response.status >= 500) {
           lastError = new Error(`HTTP ${response.status}: ${errText}`);
           continue;
         }
 
-        // 4xx client errors (except 429) are not retryable
         lastError = new Error(`HTTP ${response.status}: ${errText}`);
         break;
       }
 
-      const data = (await response.json()) as OpenRouterResponse;
-      const content = data.choices?.[0]?.message?.content ?? null;
+      // ── Stream reading ───────────────────────────────────────
+      const body = response.body;
+      if (!body) {
+        lastError = new Error("No response body");
+        continue;
+      }
 
-      if (!content) {
-        console.warn("[OpenRouter] Empty response content, retrying...");
+      const reader = body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      let buffer = "";
+
+      // Stall timer: abort if no chunk arrives within stallTimeoutMs
+      let stallTimer: ReturnType<typeof setTimeout> | null = null;
+      const resetStallTimer = () => {
+        if (stallTimer) clearTimeout(stallTimer);
+        stallTimer = setTimeout(() => controller.abort(), stallTimeoutMs);
+      };
+      resetStallTimer();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          resetStallTimer();
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process SSE lines
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed === "data: [DONE]") continue;
+            if (!trimmed.startsWith("data: ")) continue;
+
+            try {
+              const json = JSON.parse(trimmed.slice(6));
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) accumulated += delta;
+            } catch {
+              // Skip malformed SSE chunks
+            }
+          }
+        }
+      } finally {
+        if (stallTimer) clearTimeout(stallTimer);
+        reader.releaseLock();
+      }
+
+      if (!accumulated) {
+        console.warn("[OpenRouter] Empty streaming response, retrying...");
         lastError = new Error("Empty response from AI model");
         continue;
       }
 
-      return content;
+      const elapsed = Date.now();
+      console.log(`[OpenRouter] Streaming complete: ${accumulated.length} chars from ${currentModel}`);
+      return accumulated;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        console.warn("[OpenRouter] Request timed out after", attemptTimeoutMs, "ms.");
-        lastError = new Error(`Request timed out after ${attemptTimeoutMs}ms`);
-
-        // On timeout, shrink generation target for the next retry to improve completion odds.
-        if (requestMaxTokens > MIN_MAX_TOKENS) {
-          requestMaxTokens = Math.max(MIN_MAX_TOKENS, Math.floor(requestMaxTokens * 0.85));
-          console.warn(`[OpenRouter] Reducing max_tokens to ${requestMaxTokens} for retry.`);
-        }
+        console.warn(`[OpenRouter] Request aborted (timeout or stall) for model ${currentModel}`);
+        lastError = new Error(`Request timed out for model ${currentModel}`);
       } else {
         console.error("[OpenRouter] Request failed:", error);
         lastError = error instanceof Error ? error : new Error(String(error));
       }
-      // Timeout and network errors are retryable
       continue;
     } finally {
-      clearTimeout(timeoutId);
+      clearTimeout(hardTimeoutId);
     }
   }
 

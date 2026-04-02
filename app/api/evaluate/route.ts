@@ -3,10 +3,12 @@ import { NextResponse } from "next/server";
 import { parseResumeFile } from "@/lib/ats/parser";
 import type { AtsEvaluationResult, ScoreBreakdown } from "@/lib/ats/types";
 import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
-import { ANALYSIS_SYSTEM_PROMPT } from "@/lib/openrouter/prompts";
+import { ANALYSIS_SYSTEM_PROMPT, summarizeInputs } from "@/lib/openrouter/prompts";
 import { serverEvaluationSchema } from "@/lib/validations/evaluation";
 import { getCurrentUser } from "@/lib/supabase/auth-helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+
+export const maxDuration = 30;
 
 const FREE_USE_LIMIT = 2;
 
@@ -102,7 +104,13 @@ export async function POST(request: Request) {
     }
 
     /* ── 5. Call AI for COMPLETE evaluation ───────────────────── */
-    const userMessage = `## RESUME\n\n${resumeText}\n\n---\n\n## JOB DESCRIPTION\n\n${jdText}`;
+    const { resume: trimmedResume, jd: trimmedJd } = summarizeInputs(resumeText, jdText);
+    const userMessage = `## RESUME\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}`;
+
+    // ── DEBUG: log the exact payload being sent to the AI ─────────────
+    console.log("\n========== [evaluate] FULL USER MESSAGE TO AI ================");
+    console.log(userMessage);
+    console.log("==============================================================\n");
 
     let aiRawResponse: string | null;
     try {
@@ -110,8 +118,8 @@ export async function POST(request: Request) {
         ANALYSIS_SYSTEM_PROMPT,
         userMessage,
         undefined, // use default model
-        60_000,    // 60s timeout
-        4096       // enough tokens for full evaluation
+        30_000,    // 30s timeout — streaming handles the rest
+        3000       // reduced for faster completion
       );
     } catch (configError) {
       // API key not configured

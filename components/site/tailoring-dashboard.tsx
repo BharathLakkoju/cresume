@@ -48,6 +48,7 @@ export interface TailoredResume {
     gpa: string;
   }>;
   certifications: string[];
+  awards?: string[];
 }
 
 export interface TailoringResult {
@@ -61,6 +62,7 @@ export interface TailoringResult {
   }>;
   format?: "pdf" | "docx";
   processingMs?: number;
+  companyName?: string;
 }
 
 type Tab = "preview" | "issues" | "changes";
@@ -75,7 +77,7 @@ function severityColor(s: string) {
 
 /* ─────────────────────────────────── download helpers ── */
 
-async function downloadPDF(r: TailoredResume) {
+async function downloadPDF(r: TailoredResume, companyName?: string) {
   const { default: jsPDF } = await import("jspdf");
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -249,8 +251,8 @@ async function downloadPDF(r: TailoredResume) {
     addSection("Projects");
     for (const p of r.projects ?? []) {
       ensureSpace(10);
-      const projTitle = `${p.name}${p.tech ? " — " + p.tech : ""}`;
-      addText(projTitle, { bold: true, size: 11 });
+      addText(p.name, { bold: true, size: 11 });
+      if (p.tech) addText(p.tech, { size: 9, color: 100 });
       for (const b of p.bullets ?? []) {
         const bulletLines = pdf.splitTextToSize(b, contentW - 5);
         bulletLines.forEach((line: string, i: number) => {
@@ -285,10 +287,31 @@ async function downloadPDF(r: TailoredResume) {
     addText((r.certifications ?? []).join("  ·  "), { size: 10 });
   }
 
-  pdf.save(`${(r.name ?? "Resume").replace(/\s+/g, "_")}_Tailored.pdf`);
+  // ── Awards & Recognition ──
+  if ((r.awards ?? []).length > 0) {
+    addSection("Awards & Recognition");
+    for (const award of r.awards ?? []) {
+      ensureSpace(6);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.text("•", margin, y);
+      const aLines = pdf.splitTextToSize(award, contentW - 4);
+      aLines.forEach((line: string) => {
+        ensureSpace(5);
+        pdf.text(line, margin + 4, y);
+        y += 4.5;
+      });
+    }
+  }
+
+  const safeName = (r.name ?? "Resume").replace(/\s+/g, "_");
+  const safeCompany = companyName
+    ? "_" + companyName.replace(/[\s/\\:*?"<>|]+/g, "_")
+    : "";
+  pdf.save(`${safeName}${safeCompany}.pdf`);
 }
 
-async function downloadDOCX(r: TailoredResume) {
+async function downloadDOCX(r: TailoredResume, companyName?: string) {
   const {
     Document,
     Paragraph,
@@ -413,20 +436,25 @@ async function downloadDOCX(r: TailoredResume) {
     for (const p of r.projects ?? []) {
       children.push(
         new Paragraph({
-          children: [
-            new TextRun({ text: p.name, bold: true, size: 22 }),
-            ...(p.tech
-              ? [
-                  new TextRun({
-                    text: `  — ${p.tech}`,
-                    size: 18,
-                    color: "555555",
-                  }),
-                ]
-              : []),
-          ],
+          children: [new TextRun({ text: p.name, bold: true, size: 22 })],
+          spacing: { after: 40 },
         }),
       );
+      if (p.tech) {
+        children.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: p.tech,
+                size: 18,
+                color: "666666",
+                italics: true,
+              }),
+            ],
+            spacing: { after: 60 },
+          }),
+        );
+      }
       for (const b of p.bullets ?? []) {
         children.push(
           new Paragraph({
@@ -479,12 +507,30 @@ async function downloadDOCX(r: TailoredResume) {
     );
   }
 
+  // Awards & Recognition
+  if ((r.awards ?? []).length > 0) {
+    children.push(sectionHeading("Awards & Recognition"));
+    for (const award of r.awards ?? []) {
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: award, size: 20 })],
+          bullet: { level: 0 },
+          spacing: { after: 40 },
+        }),
+      );
+    }
+  }
+
   const doc = new Document({ sections: [{ children }] });
   const blob = await Packer.toBlob(doc);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${(r.name ?? "resume").replace(/\s+/g, "_")}_tailored.docx`;
+  const safeName = (r.name ?? "resume").replace(/\s+/g, "_");
+  const safeCompany = companyName
+    ? "_" + companyName.replace(/[\s/\\:*?"<>|]+/g, "_")
+    : "";
+  a.download = `${safeName}${safeCompany}.docx`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -557,7 +603,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
                 onClick={async () => {
                   setIsDownloadingDocx(true);
                   try {
-                    await downloadDOCX(resume);
+                    await downloadDOCX(resume, result.companyName);
                   } finally {
                     setIsDownloadingDocx(false);
                   }
@@ -575,7 +621,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
                 onClick={async () => {
                   setIsDownloadingPdf(true);
                   try {
-                    await downloadPDF(resume);
+                    await downloadPDF(resume, result.companyName);
                   } finally {
                     setIsDownloadingPdf(false);
                   }
@@ -839,20 +885,22 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
           <div className="space-y-4">
             {(resume.projects ?? []).map((p, i) => (
               <div key={i}>
-                <div className="flex flex-wrap items-baseline gap-x-2">
+                <div>
                   <span className="font-semibold text-gray-900">{p.name}</span>
-                  {p.tech && (
-                    <span className="text-xs text-gray-500">— {p.tech}</span>
-                  )}
                   {p.link && (
                     <a
                       href={p.link}
-                      className="text-xs text-gray-500 underline"
+                      className="ml-2 text-xs text-gray-500 underline"
                       target="_blank"
                       rel="noreferrer"
                     >
                       {p.link}
                     </a>
+                  )}
+                  {p.tech && (
+                    <p className="text-xs text-gray-500 italic mt-0.5">
+                      {p.tech}
+                    </p>
                   )}
                 </div>
                 <ul className="mt-1.5 space-y-1.5 pl-4">
@@ -909,6 +957,19 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
               </span>
             ))}
           </div>
+        </ResumeSection>
+      )}
+
+      {/* Awards & Recognition */}
+      {(resume.awards ?? []).length > 0 && (
+        <ResumeSection title="Awards &amp; Recognition">
+          <ul className="space-y-1.5 pl-4">
+            {(resume.awards ?? []).map((a, i) => (
+              <li key={i} className="list-disc text-sm leading-6 text-gray-700">
+                {a}
+              </li>
+            ))}
+          </ul>
         </ResumeSection>
       )}
 

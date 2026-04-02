@@ -158,6 +158,7 @@ export function ResumeBuilderForm({
         certifications: Array.isArray(profile.certifications)
           ? profile.certifications
           : [],
+        awards: Array.isArray(profile.awards) ? profile.awards : [],
       };
 
       const response = await fetch("/api/build", {

@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
-import { TAILORING_SYSTEM_PROMPT } from "@/lib/openrouter/prompts";
+import { BUILD_SYSTEM_PROMPT, summarizeInputs } from "@/lib/openrouter/prompts";
 import { getCurrentUser } from "@/lib/supabase/auth-helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+
+export const maxDuration = 30;
 
 const FREE_USE_LIMIT = 2;
 
@@ -31,6 +33,7 @@ interface ResumeData {
     name: string;
     tech: string;
     link: string;
+    website?: string;
     bullets: string[];
   }>;
   education: Array<{
@@ -40,6 +43,7 @@ interface ResumeData {
     gpa: string;
   }>;
   certifications: string[];
+  awards?: string[];
 }
 
 interface TailoringResult {
@@ -60,6 +64,7 @@ interface TailoringResult {
       name: string;
       tech: string;
       link: string;
+      website?: string;
       bullets: string[];
     }>;
     education: Array<{
@@ -69,9 +74,11 @@ interface TailoringResult {
       gpa: string;
     }>;
     certifications: string[];
+    awards?: string[];
   };
   changesApplied: Array<{ section: string; what: string; why: string }>;
   atsScore?: number;
+  companyName?: string;
 }
 
 /**
@@ -123,7 +130,8 @@ function serializeResumeData(r: ResumeData): string {
     for (const p of r.projects) {
       lines.push(`Project: ${p.name}`);
       if (p.tech) lines.push(`Tech Stack: ${p.tech}`);
-      if (p.link) lines.push(`Link: ${p.link}`);
+      if (p.link) lines.push(`GitHub: ${p.link}`);
+      if (p.website) lines.push(`Website: ${p.website}`);
       if (p.bullets.length > 0) {
         lines.push("Details:");
         for (const b of p.bullets) {
@@ -149,6 +157,13 @@ function serializeResumeData(r: ResumeData): string {
     lines.push("CERTIFICATIONS");
     for (const c of r.certifications) {
       if (c.trim()) lines.push(c.trim());
+    }
+  }
+
+  if ((r.awards ?? []).length > 0) {
+    lines.push("", "AWARDS & RECOGNITION");
+    for (const a of r.awards ?? []) {
+      if (a.trim()) lines.push(`- ${a.trim()}`);
     }
   }
 
@@ -238,17 +253,18 @@ export async function POST(request: Request) {
 
     /* ── 3. Serialize resume data to text ────────────────────── */
     const resumeText = serializeResumeData(rd);
-    const userMessage = `## RESUME (entered via structured builder form)\n\n${resumeText}\n\n---\n\n## JOB DESCRIPTION\n\n${jdText.trim()}`;
+    const { resume: trimmedResume, jd: trimmedJd } = summarizeInputs(resumeText, jdText);
+    const userMessage = `## RESUME (entered via structured builder form)\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}`;
 
     /* ── 4. Call AI ──────────────────────────────────────────── */
     let aiRawResponse: string | null;
     try {
       aiRawResponse = await callOpenRouter(
-        TAILORING_SYSTEM_PROMPT,
+        BUILD_SYSTEM_PROMPT,
         userMessage,
         undefined,
-        150_000,
-        4600
+        30_000,  // 30s timeout — streaming handles long generations
+        3000     // reduced from 4600 for faster completion
       );
     } catch {
       return NextResponse.json(
