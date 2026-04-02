@@ -46,6 +46,7 @@ interface ProjectEntry {
   name: string;
   tech: string;
   link: string;
+  website: string;
   bullets: string;
 }
 
@@ -82,7 +83,7 @@ function SectionHeader({
     <button
       type="button"
       onClick={() => onToggle(sectionId)}
-      className="flex w-full items-center justify-between bg-surface-low px-4 py-3 text-left transition-all duration-200 ease-out hover:bg-surface-highest"
+      className="flex w-full items-center justify-between bg-neutral-300 px-4 py-3 text-left transition-all duration-200 ease-out hover:bg-neutral-400"
     >
       <span className="label-sm flex items-center gap-2 text-foreground">
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -211,7 +212,7 @@ export default function ProfilePage() {
     { id: uid(), category: "Tools & Platforms", items: "" },
   ]);
   const [projects, setProjects] = useState<ProjectEntry[]>([
-    { id: uid(), name: "", tech: "", link: "", bullets: "" },
+    { id: uid(), name: "", tech: "", link: "", website: "", bullets: "" },
   ]);
   const [education, setEducation] = useState<EduEntry[]>([
     { id: uid(), institution: "", degree: "", year: "", gpa: "" },
@@ -299,12 +300,14 @@ export default function ProfilePage() {
               name?: string;
               tech?: string;
               link?: string;
+              website?: string;
               bullets?: string[] | string;
             }) => ({
               id: uid(),
               name: p.name ?? "",
               tech: p.tech ?? "",
               link: p.link ?? "",
+              website: p.website ?? "",
               bullets: Array.isArray(p.bullets)
                 ? p.bullets.join("\n")
                 : (p.bullets ?? ""),
@@ -398,7 +401,7 @@ export default function ProfilePage() {
   const addProject = () =>
     setProjects((prev) => [
       ...prev,
-      { id: uid(), name: "", tech: "", link: "", bullets: "" },
+      { id: uid(), name: "", tech: "", link: "", website: "", bullets: "" },
     ]);
 
   const updateEdu = (id: string, field: keyof EduEntry, val: string) =>
@@ -417,6 +420,15 @@ export default function ProfilePage() {
   async function handleSave() {
     setSaving(true);
     setSaveStatus("idle");
+
+    const hasProjectMissingRepoLink = projects.some(
+      (p) => p.name.trim() && !p.link.trim(),
+    );
+    if (hasProjectMissingRepoLink) {
+      setSaveStatus("error");
+      setSaving(false);
+      return;
+    }
 
     const profile = {
       name: name.trim(),
@@ -453,6 +465,7 @@ export default function ProfilePage() {
           name: p.name.trim(),
           tech: p.tech.trim(),
           link: p.link.trim(),
+          website: p.website.trim(),
           bullets: p.bullets
             .split("\n")
             .map((b) => b.trim())
@@ -842,13 +855,23 @@ export default function ProfilePage() {
                         placeholder="React, Node.js, PostgreSQL"
                       />
                     </div>
-                    <Field
-                      label="Link (optional)"
-                      id={`p-proj-link-${p.id}`}
-                      value={p.link}
-                      onChange={(v) => updateProject(p.id, "link", v)}
-                      placeholder="github.com/arjun/project"
-                    />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field
+                        label="GitHub / Repo URL"
+                        id={`p-proj-link-${p.id}`}
+                        value={p.link}
+                        onChange={(v) => updateProject(p.id, "link", v)}
+                        placeholder="github.com/username/project"
+                        required
+                      />
+                      <Field
+                        label="Live Demo / Website"
+                        id={`p-proj-website-${p.id}`}
+                        value={p.website}
+                        onChange={(v) => updateProject(p.id, "website", v)}
+                        placeholder="yourproject.vercel.app"
+                      />
+                    </div>
                     <TextareaField
                       label="What You Built"
                       id={`p-proj-bullets-${p.id}`}
@@ -1015,40 +1038,42 @@ export default function ProfilePage() {
           </AnimatePresence>
         </div>
 
-        {/* Save button */}
-        <div className="mt-10 flex items-center gap-4">
-          <Button
-            onClick={handleSave}
-            size="default"
-            className="min-w-36"
-            disabled={saving}
-          >
-            {saving ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving…
-              </span>
-            ) : saveStatus === "saved" ? (
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Profile Saved
-              </span>
-            ) : saveStatus === "error" ? (
-              <span className="flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Save Failed
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Save className="h-4 w-4" />
-                Save Profile
-              </span>
-            )}
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            Your profile is used by the Resume Builder to create tailored
-            resumes instantly.
-          </p>
+        {/* Save button — sticky at bottom */}
+        <div className="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-surface-high bg-background/95 px-4 py-4 backdrop-blur supports-backdrop-filter:bg-background/80 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={handleSave}
+              size="default"
+              className="min-w-36"
+              disabled={saving}
+            >
+              {saving ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving…
+                </span>
+              ) : saveStatus === "saved" ? (
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Profile Saved
+                </span>
+              ) : saveStatus === "error" ? (
+                <span className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  Save Failed
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <Save className="h-4 w-4" />
+                  Save Profile
+                </span>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Your profile is used by the Resume Builder to create tailored
+              resumes instantly.
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

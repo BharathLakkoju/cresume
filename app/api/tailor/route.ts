@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 
 import { parseResumeFile } from "@/lib/ats/parser";
 import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
-import { TAILORING_SYSTEM_PROMPT } from "@/lib/openrouter/prompts";
+import { TAILORING_SYSTEM_PROMPT, summarizeInputs } from "@/lib/openrouter/prompts";
 import { getCurrentUser } from "@/lib/supabase/auth-helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+
+export const maxDuration = 30;
 
 const FREE_USE_LIMIT = 2;
 
@@ -42,12 +44,14 @@ interface TailoringResult {
       gpa: string;
     }>;
     certifications: string[];
+    awards?: string[];
   };
   changesApplied: Array<{
     section: string;
     what: string;
     why: string;
   }>;
+  companyName?: string;
 }
 
 /**
@@ -119,7 +123,9 @@ export async function POST(request: Request) {
     let resumeText: string;
     try {
       resumeText = await parseResumeFile(resumeFile);
+      console.log(`[tailor] Extracted ${resumeText.length} characters from resume`);
     } catch (parseError) {
+      console.error("[tailor] Resume parsing error:", parseError);
       return NextResponse.json(
         {
           error:
@@ -139,7 +145,13 @@ export async function POST(request: Request) {
     }
 
     /* ── 4. Call AI for tailoring ─────────────────────────────── */
-    const userMessage = `## RESUME\n\n${resumeText}\n\n---\n\n## JOB DESCRIPTION\n\n${rawJd.trim()}`;
+    const { resume: trimmedResume, jd: trimmedJd } = summarizeInputs(resumeText, rawJd);
+    const userMessage = `## RESUME\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}`;
+
+    // ── DEBUG: log the exact payload being sent to the AI ─────────────
+    console.log("\n========== [tailor] FULL USER MESSAGE TO AI ================");
+    console.log(userMessage);
+    console.log("=============================================================\n");
 
     let aiRawResponse: string | null;
     try {
@@ -147,8 +159,8 @@ export async function POST(request: Request) {
         TAILORING_SYSTEM_PROMPT,
         userMessage,
         undefined,
-        150_000, // tailoring payloads are large and free models can be slower
-        4600     // keep output rich while avoiding slow oversized generations
+        30_000,  // 30s timeout — streaming handles long generations
+        4600     // reduced from 4600 for faster completion
       );
     } catch (configError) {
       return NextResponse.json(

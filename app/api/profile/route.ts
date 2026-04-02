@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/supabase/auth-helpers";
-import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { getAuthenticatedClient } from "@/lib/supabase/auth-helpers";
+
+export const maxDuration = 10;
 
 export interface ProfileData {
   name: string;
@@ -22,6 +23,7 @@ export interface ProfileData {
     name: string;
     tech: string;
     link: string;
+    website: string;
     bullets: string[];
   }>;
   education: Array<{
@@ -34,22 +36,38 @@ export interface ProfileData {
   awards: string[];
 }
 
+/*
+ * Required Supabase RLS policies for user_profiles table:
+ *
+ *   ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ *
+ *   CREATE POLICY "Users can view own profile"
+ *     ON user_profiles FOR SELECT
+ *     USING (auth.uid() = user_id);
+ *
+ *   CREATE POLICY "Users can insert own profile"
+ *     ON user_profiles FOR INSERT
+ *     WITH CHECK (auth.uid() = user_id);
+ *
+ *   CREATE POLICY "Users can update own profile"
+ *     ON user_profiles FOR UPDATE
+ *     USING (auth.uid() = user_id);
+ */
+
 /**
  * GET /api/profile
  * Returns the authenticated user's saved profile, or null if none exists.
+ * Uses the authenticated user's server client (RLS-based) — no service role key needed.
  */
 export async function GET() {
-  const user = await getCurrentUser();
-  if (!user) {
+  const auth = await getAuthenticatedClient();
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = getSupabaseServiceClient();
-  if (!service) {
-    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-  }
+  const { supabase, user } = auth;
 
-  const { data, error } = await service
+  const { data, error } = await supabase
     .from("user_profiles")
     .select("*")
     .eq("user_id", user.id)
@@ -87,17 +105,15 @@ export async function GET() {
 /**
  * PUT /api/profile
  * Upserts the authenticated user's profile.
+ * Uses the authenticated user's server client (RLS-based) — no service role key needed.
  */
 export async function PUT(request: Request) {
-  const user = await getCurrentUser();
-  if (!user) {
+  const auth = await getAuthenticatedClient();
+  if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const service = getSupabaseServiceClient();
-  if (!service) {
-    return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
-  }
+  const { supabase, user } = auth;
 
   let body: { profile?: ProfileData };
   try {
@@ -109,6 +125,22 @@ export async function PUT(request: Request) {
   const p = body.profile;
   if (!p) {
     return NextResponse.json({ error: "Profile data is required" }, { status: 400 });
+  }
+
+  const hasProjectMissingRepoLink = (p.projects ?? []).some(
+    (project) =>
+      Boolean(
+        project.name?.trim() ||
+          project.tech?.trim() ||
+          project.website?.trim() ||
+          (project.bullets?.length ?? 0) > 0
+      ) && !project.link?.trim()
+  );
+  if (hasProjectMissingRepoLink) {
+    return NextResponse.json(
+      { error: "GitHub / Repo URL is required for each project." },
+      { status: 400 }
+    );
   }
 
   // Determine whether profile is "complete enough" for builder use
@@ -136,7 +168,7 @@ export async function PUT(request: Request) {
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await service
+  const { error } = await supabase
     .from("user_profiles")
     .upsert(row, { onConflict: "user_id" });
 
