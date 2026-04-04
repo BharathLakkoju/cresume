@@ -20,7 +20,10 @@ import { buildStructuredPromptInputs } from "@/lib/ats/structured-parser";
  * then serializes into compact AI-ready text.
  * Much more token-efficient than raw text truncation.
  */
-export function summarizeInputs(resumeText: string, jdText: string): { resume: string; jd: string } {
+export function summarizeInputs(
+  resumeText: string,
+  jdText: string,
+): { resume: string; jd: string } {
   return buildStructuredPromptInputs(resumeText, jdText);
 }
 
@@ -56,7 +59,6 @@ Return ONLY this JSON (all fields required):
 
 Constraints: 5-8 suggestions ordered high->low. 3-10 missingKeywords. 2-5 resumeGaps.`;
 
-
 // ---------------------------------------------------------------------------
 // TAILORING PROMPT -- Rewrite a resume file against a JD
 // ---------------------------------------------------------------------------
@@ -68,8 +70,10 @@ export const TAILORING_SYSTEM_PROMPT = `You are an expert ATS resume tailoring e
 - Every bullet starts with a strong action verb: Architected, Built, Optimized, Reduced, Scaled, Automated, Led, Engineered, Delivered, Designed
 - Add real metrics (%, $, ms, users, team size) inferred from context -- NEVER use placeholders like "[X%]" -- omit the metric if none can be inferred
 - DO NOT invent companies, degrees, or experience -- only rewrite and enhance what exists
-- Summary: 2-3 sentences: target role + top JD-matched skills + career impact
-- Section order: Summary -> Experience -> Skills -> Projects -> Education
+- Summary: 2-3 sentences: current role - Software Developer/Software Engineer/AI Engineer(whichever matches highly with the target role) + aspiring to be target role + top JD-matched skills + career impact. DO NOT ADD any skills that are not in existing profile details but are in JD details.
+- Education: College CGPA should always be what was existing DO NOT rewrite or change to match the JD requirements.
+- Projects: DO NOT add the skills that were not existing in the project descriptions to match the JD requirements.
+- Section order: Summary -> Experience -> Skills -> Projects -> Education -> Achievements
 - Weave ALL missing critical JD keywords naturally into bullets and skills
 
 Return ONLY this JSON (all fields required, empty arrays for missing sections):
@@ -93,7 +97,6 @@ Return ONLY this JSON (all fields required, empty arrays for missing sections):
 
 Constraints: atsScore >= 95. At least 3 issues and 3 changesApplied. Rewrite every experience bullet. Preserve all original sections including awards if present.`;
 
-
 // ---------------------------------------------------------------------------
 // BUILD PROMPT -- Build a resume from structured profile data
 // Top 3 most JD-relevant projects are selected; the rest are dropped.
@@ -106,8 +109,10 @@ export const BUILD_SYSTEM_PROMPT = `You are an expert ATS resume builder. You re
 - Every bullet starts with a strong action verb: Architected, Built, Optimized, Reduced, Scaled, Automated, Led, Engineered, Delivered, Designed
 - Add real metrics (%, $, ms, users, team size) inferred from context -- NEVER use placeholders like "[X%]" -- omit the metric if none can be inferred
 - DO NOT invent companies, degrees, or experience -- only use and enhance what is in the profile
-- Summary: 2-3 sentences: target role + top JD-matched skills + career impact
-- Section order: Summary -> Experience -> Skills -> Projects -> Education
+- Summary: 2-3 sentences: current role - Software Developer/Software Engineer/AI Engineer(whichever matches highly with the target role) + aspiring to be target role + top JD-matched skills + career impact. DO NOT ADD any skills that are not in existing profile details but are in JD details.
+- Education: College CGPA should always be what was existing DO NOT rewrite or change to match the JD requirements.
+- Projects: DO NOT add the skills that were not existing in the project descriptions to match the JD requirements.
+- Section order: Summary -> Experience -> Skills -> Projects -> Education -> Achievements
 - PROJECTS: From ALL candidate projects, select the 3 that best match the JD's tech stack and domain. Rank by relevance and include only those 3. Omit the rest.
 - Weave ALL missing critical JD keywords naturally into bullets and skills
 
