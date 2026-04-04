@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
+import { LoadingProvider } from "@/components/providers/loading-provider";
 
 const bodyFont = Inter({
   subsets: ["latin"],
-  variable: "--font-body"
+  variable: "--font-body",
 });
 
 const displayFont = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-display"
+  variable: "--font-display",
 });
 
 export const metadata: Metadata = {
@@ -22,25 +23,32 @@ export const metadata: Metadata = {
     "resume score tool",
     "ATS evaluator",
     "resume job match",
-    "resume optimization"
+    "resume optimization",
   ],
   openGraph: {
     title: "ATS Precision — Engineered for Clarity",
     description:
       "A hiring-aligned ATS evaluator for realistic resume scoring, keyword gaps, and role-specific improvement ideas.",
-    type: "website"
+    type: "website",
   },
-  metadataBase: new URL("https://atsprecision.example.com")
+  metadataBase: new URL("https://atsprecision.example.com"),
 };
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${bodyFont.variable} ${displayFont.variable}`} suppressHydrationWarning data-scroll-behavior="smooth">
-      <body>{children}</body>
+    <html
+      lang="en"
+      className={`${bodyFont.variable} ${displayFont.variable}`}
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+    >
+      <body>
+        <LoadingProvider>{children}</LoadingProvider>
+      </body>
     </html>
   );
 }
