@@ -17,6 +17,7 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useEvaluationStore } from "@/store/evaluation-store";
 
 const navItems: Array<{
   label: string;
@@ -33,6 +34,19 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+
+  const clearLocalUserData = () => {
+    useEvaluationStore.setState({ latestResult: null, history: [] });
+
+    if (typeof window === "undefined") return;
+
+    try {
+      window.localStorage.removeItem("ats-precision-history");
+      window.localStorage.removeItem("ats-precision-settings");
+    } catch {
+      // Ignore localStorage failures in restricted browser modes.
+    }
+  };
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
@@ -54,8 +68,12 @@ export function Sidebar() {
 
   const handleSignOut = async () => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    clearLocalUserData();
+
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+
     router.push("/");
   };
 

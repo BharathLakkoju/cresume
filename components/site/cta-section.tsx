@@ -11,18 +11,18 @@ export function CtaSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start end", "end start"]
+    offset: ["start end", "end start"],
   });
 
   // Background glow drifts upward as you scroll into the section
-  const bgY      = useTransform(scrollYProgress, [0, 1], [80, -80]);
+  const bgY = useTransform(scrollYProgress, [0, 1], [80, -80]);
   // Content has a subtle counter-scroll lift for depth
   const contentY = useTransform(scrollYProgress, [0, 1], [30, -30]);
 
   return (
     <section
       ref={sectionRef}
-      id="pricing"
+      id="cta"
       className="dark-section relative overflow-hidden py-24 lg:py-32"
     >
       {/* Parallax background glow — white tinted on dark background */}
@@ -38,8 +38,8 @@ export function CtaSection() {
               Ready to break the black box?
             </h2>
             <p className="mx-auto mt-6 max-w-xl text-lg text-white/60">
-              Join 15,000+ professionals using precision AI to secure their dream
-              roles.
+              Join 15,000+ professionals using precision AI to secure their
+              dream roles.
             </p>
             <div className="mt-10">
               <Button

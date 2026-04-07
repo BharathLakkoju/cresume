@@ -45,7 +45,12 @@ export function FeaturesSection() {
   const cardYValues = [card0Y, card1Y, card2Y];
 
   return (
-    <section ref={sectionRef} id="features" className="relative py-24 lg:py-32">
+    <section
+      ref={sectionRef}
+      id="features"
+      className="relative py-24 lg:py-32"
+      style={{ scrollMarginTop: "80px" }}
+    >
       {/* Parallax background glow */}
       <motion.div
         style={{ y: bgY }}

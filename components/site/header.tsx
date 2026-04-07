@@ -8,10 +8,27 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#workflow" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Features", href: "/#features" },
+  { label: "How It Works", href: "/#workflow" },
+  { label: "Pricing", href: "/#pricing" },
 ];
+
+function handleNavClick(
+  e: React.MouseEvent<HTMLAnchorElement>,
+  href: string,
+  onClose?: () => void,
+) {
+  if (href.startsWith("/#")) {
+    const id = href.slice(2);
+    const el = document.getElementById(id);
+    if (el) {
+      e.preventDefault();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      onClose?.();
+    }
+    // else: let the browser navigate to /#id on the home page
+  }
+}
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -32,6 +49,7 @@ export function Header() {
             <a
               key={link.label}
               href={link.href}
+              onClick={(e) => handleNavClick(e, link.href)}
               className="transition-colors duration-200 hover:text-foreground"
             >
               {link.label}
@@ -80,7 +98,9 @@ export function Header() {
                 <a
                   key={link.label}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) =>
+                    handleNavClick(e, link.href, () => setMobileOpen(false))
+                  }
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {link.label}

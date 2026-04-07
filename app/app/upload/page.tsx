@@ -651,25 +651,21 @@ function ModeToggle({
   const modes: {
     id: Mode;
     label: string;
-    sub: string;
     Icon: typeof ScanSearch;
   }[] = [
     {
       id: "analysis",
       label: "ATS Analysis",
-      sub: "Score & keyword gaps",
       Icon: ScanSearch,
     },
     {
       id: "tailoring",
       label: "Resume Tailoring",
-      sub: "Rewrite for this role",
       Icon: Wand2,
     },
     {
       id: "builder",
       label: "Resume Builder",
-      sub: "Build from scratch",
       Icon: PenLine,
     },
   ];
@@ -683,7 +679,7 @@ function ModeToggle({
             key={m.id}
             type="button"
             onClick={() => onChange(m.id)}
-            className="relative z-10 flex flex-1 items-center justify-center gap-1.5 sm:gap-2.5 px-2 sm:px-4 py-2.5 transition-all duration-200 ease-out"
+            className="relative lg:w-xs z-10 flex flex-1 items-center justify-center gap-1.5 sm:gap-2.5 px-2 sm:px-4 py-2.5 transition-all duration-200 ease-out"
           >
             {isActive && (
               <motion.div
@@ -700,11 +696,6 @@ function ModeToggle({
                 className={`text-xs font-semibold uppercase tracking-widest leading-none transition-colors duration-150 ${isActive ? "text-white" : "text-muted-foreground"}`}
               >
                 {m.label}
-              </p>
-              <p
-                className={`text-[10px] mt-0.5 transition-colors duration-150 ${isActive ? "text-white/70" : "text-muted-foreground/60"}`}
-              >
-                {m.sub}
               </p>
             </div>
             <span
