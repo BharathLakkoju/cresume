@@ -15,6 +15,7 @@ import {
   Plus,
   Trash2,
   Save,
+  Download,
   Loader2,
   CheckCircle2,
   AlertCircle,
@@ -23,6 +24,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useEvaluationStore } from "@/store/evaluation-store";
+
+const SETTINGS_STORAGE_KEY = "ats-precision-settings";
 
 /* ─── Types ────────────────────────────────────────────────────────────── */
 
@@ -193,6 +197,8 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
 /* ─── Main page ────────────────────────────────────────────────────────── */
 
 export default function ProfilePage() {
+  const localHistory = useEvaluationStore((state) => state.history);
+
   /* ── Contact ── */
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -223,19 +229,163 @@ export default function ProfilePage() {
   /* ── UI state ── */
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved" | "error">(
     "idle",
   );
-  const [openSections, setOpenSections] = useState<Set<string>>(
-    new Set([
-      "contact",
-      "summary",
-      "experience",
-      "skills",
-      "projects",
-      "education",
-    ]),
+  const [exportStatus, setExportStatus] = useState<"idle" | "done" | "error">(
+    "idle",
   );
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+
+  const getLocalSettingsSnapshot = () => {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const buildCurrentProfileSnapshot = () => ({
+    name: name.trim(),
+    email: email.trim(),
+    phone: phone.trim(),
+    location: contactLocation.trim(),
+    linkedin: linkedin.trim(),
+    github: github.trim(),
+    summary: summary.trim(),
+    experience: experiences
+      .filter((e) => e.company.trim() || e.title.trim())
+      .map((e) => ({
+        company: e.company.trim(),
+        title: e.title.trim(),
+        dates: e.dates.trim(),
+        location: e.location.trim(),
+        bullets: e.bullets
+          .split("\n")
+          .map((b) => b.trim())
+          .filter(Boolean),
+      })),
+    skills: skills
+      .filter((s) => s.category.trim() || s.items.trim())
+      .map((s) => ({
+        category: s.category.trim(),
+        items: s.items
+          .split(",")
+          .map((i) => i.trim())
+          .filter(Boolean),
+      })),
+    projects: projects
+      .filter((p) => p.name.trim())
+      .map((p) => ({
+        name: p.name.trim(),
+        tech: p.tech.trim(),
+        link: p.link.trim(),
+        website: p.website.trim(),
+        bullets: p.bullets
+          .split("\n")
+          .map((b) => b.trim())
+          .filter(Boolean),
+      })),
+    education: education
+      .filter((e) => e.institution.trim() || e.degree.trim())
+      .map((e) => ({
+        institution: e.institution.trim(),
+        degree: e.degree.trim(),
+        year: e.year.trim(),
+        gpa: e.gpa.trim(),
+      })),
+    certifications: certifications
+      .split("\n")
+      .map((c) => c.trim())
+      .filter(Boolean),
+    awards: awards
+      .split("\n")
+      .map((a) => a.trim())
+      .filter(Boolean),
+  });
+
+  async function handleExport() {
+    setExporting(true);
+    setExportStatus("idle");
+
+    try {
+      const currentProfile = buildCurrentProfileSnapshot();
+      const res = await fetch("/api/profile/export", {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+
+      let cloudData: Record<string, unknown>;
+
+      if (res.ok) {
+        cloudData = await res.json();
+      } else {
+        let errorMessage = "Cloud export unavailable";
+
+        try {
+          const errorBody = await res.json();
+          if (typeof errorBody?.error === "string") {
+            errorMessage = errorBody.error;
+          }
+        } catch {
+          // Ignore non-JSON error responses and continue with local export.
+        }
+
+        cloudData = {
+          exportVersion: 1,
+          exportedAt: new Date().toISOString(),
+          user: null,
+          counts: {
+            evaluations: 0,
+            hasProfile: false,
+          },
+          profile: null,
+          evaluations: [],
+          warnings: [errorMessage],
+        };
+      }
+
+      const exportPayload = {
+        ...cloudData,
+        localData: {
+          exportedAt: new Date().toISOString(),
+          settings: getLocalSettingsSnapshot(),
+          currentProfile,
+          sessionHistory: localHistory,
+        },
+      };
+
+      const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+        type: "application/json",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeName = (name.trim() || "profile")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+      link.href = url;
+      link.download = `${safeName || "profile"}-ats-precision-export.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      setExportStatus("done");
+      setTimeout(() => setExportStatus("idle"), 3000);
+    } catch (err) {
+      console.error("Failed to export data:", err);
+      setExportStatus("error");
+      setTimeout(() => setExportStatus("idle"), 4000);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   /* ── Load profile on mount ── */
   const loadProfile = useCallback(async () => {
@@ -430,64 +580,7 @@ export default function ProfilePage() {
       return;
     }
 
-    const profile = {
-      name: name.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      location: contactLocation.trim(),
-      linkedin: linkedin.trim(),
-      github: github.trim(),
-      summary: summary.trim(),
-      experience: experiences
-        .filter((e) => e.company.trim() || e.title.trim())
-        .map((e) => ({
-          company: e.company.trim(),
-          title: e.title.trim(),
-          dates: e.dates.trim(),
-          location: e.location.trim(),
-          bullets: e.bullets
-            .split("\n")
-            .map((b) => b.trim())
-            .filter(Boolean),
-        })),
-      skills: skills
-        .filter((s) => s.category.trim() || s.items.trim())
-        .map((s) => ({
-          category: s.category.trim(),
-          items: s.items
-            .split(",")
-            .map((i) => i.trim())
-            .filter(Boolean),
-        })),
-      projects: projects
-        .filter((p) => p.name.trim())
-        .map((p) => ({
-          name: p.name.trim(),
-          tech: p.tech.trim(),
-          link: p.link.trim(),
-          website: p.website.trim(),
-          bullets: p.bullets
-            .split("\n")
-            .map((b) => b.trim())
-            .filter(Boolean),
-        })),
-      education: education
-        .filter((e) => e.institution.trim() || e.degree.trim())
-        .map((e) => ({
-          institution: e.institution.trim(),
-          degree: e.degree.trim(),
-          year: e.year.trim(),
-          gpa: e.gpa.trim(),
-        })),
-      certifications: certifications
-        .split("\n")
-        .map((c) => c.trim())
-        .filter(Boolean),
-      awards: awards
-        .split("\n")
-        .map((a) => a.trim())
-        .filter(Boolean),
-    };
+    const profile = buildCurrentProfileSnapshot();
 
     try {
       const res = await fetch("/api/profile", {
@@ -535,6 +628,42 @@ export default function ProfilePage() {
           just paste a job description and the AI will create a tailored resume
           from your saved profile.
         </p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between bg-surface-low p-4">
+          <p className="text-sm text-muted-foreground">
+            Download your saved profile, synced evaluations, and browser-stored
+            app data in one JSON export.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={handleExport}
+            disabled={exporting}
+            className="min-w-44"
+          >
+            {exporting ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Exporting…
+              </span>
+            ) : exportStatus === "done" ? (
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                Downloaded
+              </span>
+            ) : exportStatus === "error" ? (
+              <span className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Export Failed
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Export Data
+              </span>
+            )}
+          </Button>
+        </div>
 
         <div className="mt-10 space-y-4">
           {/* Contact Information */}

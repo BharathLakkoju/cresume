@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ type AuthMode = "login" | "signup";
 
 export function AuthForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<AuthMode>("signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,7 +71,11 @@ export function AuthForm() {
           password,
         });
         if (authError) throw authError;
-        router.push("/app/upload");
+        const nextPath = searchParams.get("next");
+        const safeNextPath =
+          nextPath && nextPath.startsWith("/") ? nextPath : "/app/upload";
+
+        router.push(safeNextPath);
         router.refresh();
       }
     } catch (submitError) {

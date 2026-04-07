@@ -42,7 +42,12 @@ export function HowItWorksSection() {
   const stepsY = useTransform(scrollYProgress, [0, 1], [20, -20]);
 
   return (
-    <section ref={sectionRef} id="workflow" className="relative py-24 lg:py-32">
+    <section
+      ref={sectionRef}
+      id="workflow"
+      className="relative py-24 lg:py-32"
+      style={{ scrollMarginTop: "80px" }}
+    >
       <div className="container">
         <FadeIn>
           <p className="label-sm text-muted-foreground">THE PROTOCOL</p>

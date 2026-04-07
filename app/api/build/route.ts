@@ -4,10 +4,15 @@ import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
 import { BUILD_SYSTEM_PROMPT, summarizeInputs } from "@/lib/openrouter/prompts";
 import { getCurrentUser } from "@/lib/supabase/auth-helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const maxDuration = 30;
 
 const FREE_USE_LIMIT = 2;
+
+type UsageClient =
+  | NonNullable<ReturnType<typeof getSupabaseServiceClient>>
+  | NonNullable<Awaited<ReturnType<typeof getSupabaseServerClient>>>;
 
 interface ContactInfo {
   email: string;
@@ -181,7 +186,7 @@ export async function POST(request: Request) {
   let anonymousUsageContext: {
     ip: string;
     currentCount: number;
-    service: NonNullable<ReturnType<typeof getSupabaseServiceClient>>;
+    client: UsageClient;
   } | null = null;
 
   try {
@@ -226,14 +231,15 @@ export async function POST(request: Request) {
     if (!user) {
       const forwarded = request.headers.get("x-forwarded-for");
       const ip = forwarded?.split(",")[0]?.trim() ?? "unknown";
-      const service = getSupabaseServiceClient();
+      const usageClient =
+        getSupabaseServiceClient() ?? (await getSupabaseServerClient());
 
-      if (service) {
-        const { data: row } = await service
+      if (usageClient) {
+        const { data: row } = await usageClient
           .from("ip_usage")
           .select("use_count")
           .eq("ip_address", ip)
-          .single();
+          .maybeSingle();
 
         if (row && row.use_count >= FREE_USE_LIMIT) {
           return NextResponse.json(
@@ -246,7 +252,7 @@ export async function POST(request: Request) {
         anonymousUsageContext = {
           ip,
           currentCount: row?.use_count ?? 0,
-          service,
+          client: usageClient,
         };
       }
     }
@@ -281,7 +287,7 @@ export async function POST(request: Request) {
     }
 
     if (anonymousUsageContext) {
-      await anonymousUsageContext.service.from("ip_usage").upsert(
+      await anonymousUsageContext.client.from("ip_usage").upsert(
         {
           ip_address: anonymousUsageContext.ip,
           use_count: anonymousUsageContext.currentCount + 1,

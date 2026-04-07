@@ -2,6 +2,7 @@ import { CtaSection } from "@/components/site/cta-section";
 import { FeaturesSection } from "@/components/site/features-section";
 import { HeroSection } from "@/components/site/hero-section";
 import { HowItWorksSection } from "@/components/site/how-it-works-section";
+import { PricingSection } from "@/components/site/pricing-section";
 import { TestimonialsSection } from "@/components/site/testimonials-section";
 
 export default function HomePage() {
@@ -10,6 +11,7 @@ export default function HomePage() {
       <HeroSection />
       <FeaturesSection />
       <HowItWorksSection />
+      <PricingSection />
       <TestimonialsSection />
       <CtaSection />
     </main>
