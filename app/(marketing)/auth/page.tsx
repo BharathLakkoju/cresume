@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthForm } from "@/components/site/auth-form";
 
 export const metadata: Metadata = {
@@ -22,7 +23,9 @@ export default function AuthPage() {
           </p>
         </div>
         <div className="mt-10">
-          <AuthForm />
+          <Suspense>
+            <AuthForm />
+          </Suspense>
         </div>
         <div className="mt-8 text-center text-sm text-muted-foreground">
           2 free evaluations available without an account.{" "}
