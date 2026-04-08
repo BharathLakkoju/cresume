@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const footerLinks = [
+const footerLinks: Array<{ label: string; href: string }> = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "AI Ethics", href: "/ai-ethics" },
@@ -21,7 +21,7 @@ export function Footer() {
           {footerLinks.map((link) => (
             <Link
               key={link.label}
-              href={link.href}
+              href={link.href as any}
               className="label-sm transition-colors hover:text-foreground"
             >
               {link.label}

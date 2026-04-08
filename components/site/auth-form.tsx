@@ -75,7 +75,7 @@ export function AuthForm() {
         const safeNextPath =
           nextPath && nextPath.startsWith("/") ? nextPath : "/app/upload";
 
-        router.push(safeNextPath);
+        router.push(safeNextPath as any);
         router.refresh();
       }
     } catch (submitError) {
