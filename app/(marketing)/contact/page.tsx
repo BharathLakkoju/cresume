@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Mail } from "lucide-react";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Contact — ATS Precision",
-  description: "Get in touch with the ATS Precision team.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Contact",
+  description:
+    "Contact atsprecise for product support, feedback, bug reports, and partnership enquiries.",
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

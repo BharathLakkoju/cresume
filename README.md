@@ -1,4 +1,4 @@
-# ATS Precision
+# atsprecise
 
 > AI-powered ATS resume evaluator — upload your resume, paste a job description, and get a precise compatibility score with keyword gap analysis and improvement guidance.
 
@@ -6,7 +6,7 @@
 
 ## About
 
-ATS Precision is a deterministic resume evaluation tool built to help job seekers understand exactly how their resume scores against a specific job description using the same logic Applicant Tracking Systems apply. Unlike vague AI feedback, it delivers a structured, weighted breakdown of keyword matches, section quality, and formatting gaps — with actionable role-specific suggestions.
+atsprecise is a deterministic resume evaluation tool built to help job seekers understand exactly how their resume scores against a specific job description using the same logic Applicant Tracking Systems apply. Unlike vague AI feedback, it delivers a structured, weighted breakdown of keyword matches, section quality, and formatting gaps — with actionable role-specific suggestions.
 
 ## Features
 
@@ -22,19 +22,19 @@ ATS Precision is a deterministic resume evaluation tool built to help job seeker
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|-----------|
-| Framework | Next.js 16 (App Router) |
-| UI Library | React 19 |
-| Styling | Tailwind CSS v4 |
-| Language | TypeScript |
-| State Management | Zustand |
-| Auth + DB | Supabase (SSR), Drizzle ORM |
-| Resume Parsing | mammoth (DOCX), unpdf (PDF) |
-| Export | jspdf, html2canvas, docx |
-| Validation | Zod |
-| Animations | Framer Motion |
-| UI Primitives | Radix UI (Label, Progress) |
+| Category         | Technology                  |
+| ---------------- | --------------------------- |
+| Framework        | Next.js 16 (App Router)     |
+| UI Library       | React 19                    |
+| Styling          | Tailwind CSS v4             |
+| Language         | TypeScript                  |
+| State Management | Zustand                     |
+| Auth + DB        | Supabase (SSR), Drizzle ORM |
+| Resume Parsing   | mammoth (DOCX), unpdf (PDF) |
+| Export           | jspdf, html2canvas, docx    |
+| Validation       | Zod                         |
+| Animations       | Framer Motion               |
+| UI Primitives    | Radix UI (Label, Progress)  |
 
 ## Local Development
 
@@ -44,8 +44,8 @@ ATS Precision is a deterministic resume evaluation tool built to help job seeker
 - Supabase project (optional — only required for auth and history features)
 
 ```bash
-git clone https://github.com/BharathLakkoju/cresume
-cd cresume
+git clone https://github.com/BharathLakkoju/atsprecise
+cd atsprecise
 npm install
 # Optional: copy .env.example to .env.local and add Supabase credentials
 npm run dev

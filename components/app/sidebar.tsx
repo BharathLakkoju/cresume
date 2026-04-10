@@ -159,7 +159,7 @@ export function Sidebar() {
       {/* ── Mobile top bar (< lg) ─────────────────────────────────────── */}
       <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 border-b border-[hsl(var(--border)/0.08)] bg-surface-base lg:hidden">
         <span className="font-display text-base font-bold tracking-tight text-foreground">
-          ATS Precision
+          atsprecise
         </span>
         {user ? (
           <MobileUserMenu initials={initials} onSignOut={handleSignOut} />

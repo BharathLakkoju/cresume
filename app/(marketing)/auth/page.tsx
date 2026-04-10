@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/site/auth-form";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Sign In — ATS Precision",
+export const metadata: Metadata = createMetadata({
+  title: "Sign In",
   description:
-    "Sign in or create an account to unlock unlimited ATS evaluations.",
-};
+    "Sign in to atsprecise to save resume evaluations, access cloud history, and manage your resume analysis workflow.",
+  path: "/auth",
+  noIndex: true,
+});
 
 export default function AuthPage() {
   return (

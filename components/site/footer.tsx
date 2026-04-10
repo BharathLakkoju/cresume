@@ -15,7 +15,7 @@ export function Footer() {
           href="/"
           className="font-display text-base font-bold text-foreground"
         >
-          ATS Precision
+          atsprecise
         </Link>
         <nav className="flex flex-wrap items-center gap-6">
           {footerLinks.map((link) => (
@@ -29,7 +29,7 @@ export function Footer() {
           ))}
         </nav>
         <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} ATS Precision. Engineered for Clarity.
+          © {new Date().getFullYear()} atsprecise. Engineered for Clarity.
         </p>
       </div>
     </footer>

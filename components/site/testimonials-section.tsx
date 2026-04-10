@@ -8,7 +8,7 @@ import { FadeIn } from "@/components/site/fade-in";
 const testimonials = [
   {
     quote:
-      "ATS Precision helped me realize my resume was being filtered out not because of my skills, but because of my structure. After one scan, I landed 3 interviews in a week.",
+      "atsprecise helped me realize my resume was being filtered out not because of my skills, but because of my structure. After one scan, I landed 3 interviews in a week.",
     initials: "SM",
     name: "Sarah Mitchell",
     role: "SENIOR PRODUCT DESIGNER",
