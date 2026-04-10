@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Settings, Cpu, User, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,12 +48,8 @@ export function getStoredSettings(): SettingsState {
 }
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<SettingsState>(DEFAULTS);
+  const [settings, setSettings] = useState<SettingsState>(() => loadSettings());
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setSettings(loadSettings());
-  }, []);
 
   function update<K extends keyof SettingsState>(
     key: K,

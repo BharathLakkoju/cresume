@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Upload, TrendingUp, Target, Zap, BarChart3 } from "lucide-react";
@@ -8,6 +8,7 @@ import { useEvaluationStore } from "@/store/evaluation-store";
 
 export default function AppDashboardPage() {
   const { history } = useEvaluationStore();
+  const [mountedAt] = useState(() => Date.now());
 
   const stats = useMemo(() => {
     if (history.length === 0) return null;
@@ -17,7 +18,7 @@ export default function AppDashboardPage() {
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / total);
     const best = Math.max(...scores);
 
-    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const oneWeekAgo = mountedAt - 7 * 24 * 60 * 60 * 1000;
     const thisWeek = history.filter(
       (h) => new Date(h.createdAt).getTime() > oneWeekAgo,
     ).length;
@@ -44,7 +45,7 @@ export default function AppDashboardPage() {
     }));
 
     return { total, avg, best, thisWeek, topMissing, buckets, scores };
-  }, [history]);
+  }, [history, mountedAt]);
 
   if (!stats) {
     return (

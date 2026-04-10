@@ -5,7 +5,10 @@ import { motion } from "framer-motion";
 import { Clock3, Sparkles, BarChart3 } from "lucide-react";
 
 import { useEvaluationStore } from "@/store/evaluation-store";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  getSupabaseBrowserClient,
+  hasSupabaseConfig,
+} from "@/lib/supabase/client";
 
 interface RemoteEntry {
   id: string;
@@ -21,12 +24,13 @@ export default function HistoryPage() {
     null,
   );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isResolvingSession, setIsResolvingSession] = useState(true);
+  const [isResolvingSession, setIsResolvingSession] = useState(() =>
+    hasSupabaseConfig(),
+  );
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) {
-      setIsResolvingSession(false);
       return;
     }
 

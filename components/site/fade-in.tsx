@@ -25,19 +25,25 @@ export function FadeIn({
   scale,
   children,
   id,
-  direction = "up"
+  direction = "up",
 }: FadeInProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    const frame = window.requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   const directionMap = {
-    up:    { y: y ?? 28, x: 0 },
-    down:  { y: -(y ?? 28), x: 0 },
-    left:  { y: 0, x: x ?? 28 },
-    right: { y: 0, x: -(x ?? 28) }
+    up: { y: y ?? 28, x: 0 },
+    down: { y: -(y ?? 28), x: 0 },
+    left: { y: 0, x: x ?? 28 },
+    right: { y: 0, x: -(x ?? 28) },
   };
 
   const offset = directionMap[direction];
@@ -47,7 +53,11 @@ export function FadeIn({
   // Note: Framer Motion only reads `initial` once on mount, so we can't change it after
   // the fact — we must swap the element type entirely.
   if (!isMounted) {
-    return <div id={id} className={cn(className)}>{children}</div>;
+    return (
+      <div id={id} className={cn(className)}>
+        {children}
+      </div>
+    );
   }
 
   return (
@@ -63,4 +73,3 @@ export function FadeIn({
     </motion.div>
   );
 }
-

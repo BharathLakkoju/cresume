@@ -1,11 +1,5 @@
 import { z } from "zod";
 
-export const acceptedMimeTypes = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/msword"
-] as const;
-
 export const clientEvaluationSchema = z.object({
   jdText: z
     .string()
@@ -27,4 +21,3 @@ export const serverEvaluationSchema = z.object({
 });
 
 export type ClientEvaluationInput = z.infer<typeof clientEvaluationSchema>;
-export type ServerEvaluationInput = z.infer<typeof serverEvaluationSchema>;
