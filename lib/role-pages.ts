@@ -827,7 +827,7 @@ export const roleLandingPages: RoleLandingPage[] = [
   },
 ];
 
-export const roleGuidesHubPath = "/resume-checker-for";
+export const roleGuidesHubPath = "/resume-checker-for" as const;
 
 export function getRoleLandingPage(slug: string) {
   return roleLandingPages.find((page) => page.slug === slug);
@@ -839,6 +839,6 @@ export function getRoleLandingPageByArticleSlug(articleSlug: string) {
   );
 }
 
-export function getRoleCompanionArticlePath(articleSlug: string) {
+export function getRoleCompanionArticlePath(articleSlug: string): `/blog/${string}` {
   return `/blog/${articleSlug}`;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -51,7 +52,7 @@ export function Header() {
             link.isRoute ? (
               <Link
                 key={link.label}
-                href={link.href as any}
+                href={link.href as Route<string>}
                 className="transition-colors duration-200 hover:text-foreground"
               >
                 {link.label}
@@ -110,7 +111,7 @@ export function Header() {
                 link.isRoute ? (
                   <Link
                     key={link.label}
-                    href={link.href as any}
+                    href={link.href as Route<string>}
                     onClick={() => setMobileOpen(false)}
                     className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
