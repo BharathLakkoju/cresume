@@ -37,6 +37,13 @@ function getStaticBlogSlugs() {
   }
 }
 
+const blogSlugs = [
+  ...new Set([
+    ...getStaticBlogSlugs(),
+    ...roleLandingPages.map((page) => page.companionArticle.slug),
+  ]),
+];
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticSitemap = staticRoutes.map((route) => ({
     url: absoluteUrl(route.path),
@@ -52,7 +59,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const roleGuideRoutes = roleLandingPages.map((page) => ({
     url: absoluteUrl(page.path),
-    lastModified,
     changeFrequency: "weekly" as const,
     priority: 0.85,
   }));

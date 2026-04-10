@@ -168,13 +168,13 @@ Return ONLY this JSON (all fields required):
       "title": "",
       "dates": "",
       "location": "",
-      "bullets": [""]
+      "bullets": []
     }
   ],
   "skills": [
     {
       "category": "",
-      "items": [""]
+      "items": []
     }
   ],
   "projects": [
@@ -183,7 +183,7 @@ Return ONLY this JSON (all fields required):
       "tech": "",
       "link": "",
       "website": "",
-      "bullets": [""]
+      "bullets": []
     }
   ],
   "education": [
@@ -194,6 +194,6 @@ Return ONLY this JSON (all fields required):
       "gpa": ""
     }
   ],
-  "certifications": [""],
-  "awards": [""]
+  "certifications": [],
+  "awards": []
 }`;

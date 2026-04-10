@@ -17,11 +17,12 @@ const SUPPORTED_EXTENSIONS = [".pdf", ".docx"];
 export async function parseResumeFile(file: File): Promise<string> {
   const fileName = file.name.toLowerCase();
   const extension = SUPPORTED_EXTENSIONS.find((entry) => fileName.endsWith(entry));
-  const arrayBuffer = await file.arrayBuffer();
 
   if (!extension) {
     throw new Error("Please upload a PDF or DOCX resume.");
   }
+
+  const arrayBuffer = await file.arrayBuffer();
 
   if (extension === ".pdf") {
     const document = await getDocumentProxy(new Uint8Array(arrayBuffer));
@@ -29,6 +30,6 @@ export async function parseResumeFile(file: File): Promise<string> {
     return text ?? "";
   }
 
-  const parsed = await mammoth.extractRawText({ buffer: Buffer.from(arrayBuffer) });  
+  const parsed = await mammoth.extractRawText({ buffer: Buffer.from(arrayBuffer) });
   return parsed.value ?? "";
 }

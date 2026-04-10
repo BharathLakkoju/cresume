@@ -259,12 +259,11 @@ function ImportSaveNoticeModal({
 
 export default function ProfilePage() {
   const localHistory = useEvaluationStore((state) => state.history);
-  const { draft: profileStoreDraft, setDraft: setProfileDraft } =
-    useProfileStore();
+  const setProfileDraft = useProfileStore((state) => state.setDraft);
   /** Prevents the sync effect from writing empty initial state to the store. */
   const hasLoadedRef = useRef(false);
-  /** Snapshot of the store draft captured at render time; read by loadProfile once on mount. */
-  const initialDraftRef = useRef(profileStoreDraft);
+  /** Snapshot of the store draft captured once; read by loadProfile on mount without subscribing to store updates. */
+  const initialDraftRef = useRef(useProfileStore.getState().draft);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   /* ── Contact ── */
@@ -384,89 +383,78 @@ export default function ProfilePage() {
 
   const applyImportedProfile = useCallback((draft: ProfileData) => {
     if (draft.name) setName(draft.name);
-    if (draft.email) setEmail(draft.email);
-    if (draft.phone) setPhone(draft.phone);
-    if (draft.location) setContactLocation(draft.location);
-    if (draft.linkedin) setLinkedin(draft.linkedin);
-    if (draft.github) setGithub(draft.github);
-    if (draft.summary) setSummary(draft.summary);
+    const experience = draft.experience ?? [];
+    const skills = draft.skills ?? [];
+    const projects = draft.projects ?? [];
+    const education = draft.education ?? [];
+    const certifications = draft.certifications ?? [];
+    const awards = draft.awards ?? [];
 
-    if (draft.experience.length) {
-      setExperiences(
-        draft.experience.map((entry) => ({
-          id: uid(),
-          company: entry.company,
-          title: entry.title,
-          dates: entry.dates,
-          location: entry.location,
-          bullets: entry.bullets.join("\n"),
-        })),
-      );
-    }
+    setName(draft.name ?? "");
+    setEmail(draft.email ?? "");
+    setPhone(draft.phone ?? "");
+    setContactLocation(draft.location ?? "");
+    setLinkedin(draft.linkedin ?? "");
+    setGithub(draft.github ?? "");
+    setSummary(draft.summary ?? "");
 
-    if (draft.skills.length) {
-      setSkills(
-        draft.skills.map((entry) => ({
-          id: uid(),
-          category: entry.category,
-          items: entry.items.join(", "),
-        })),
-      );
-    }
+    setExperiences(
+      experience.map((entry) => ({
+        id: uid(),
+        company: entry.company,
+        title: entry.title,
+        dates: entry.dates,
+        location: entry.location,
+        bullets: entry.bullets.join("\n"),
+      })),
+    );
 
-    if (draft.projects.length) {
-      setProjects(
-        draft.projects.map((entry) => ({
-          id: uid(),
-          name: entry.name,
-          tech: entry.tech,
-          link: entry.link,
-          website: entry.website,
-          bullets: entry.bullets.join("\n"),
-        })),
-      );
-    }
+    setSkills(
+      skills.map((entry) => ({
+        id: uid(),
+        category: entry.category,
+        items: entry.items.join(", "),
+      })),
+    );
 
-    if (draft.education.length) {
-      setEducation(
-        draft.education.map((entry) => ({
-          id: uid(),
-          institution: entry.institution,
-          degree: entry.degree,
-          year: entry.year,
-          gpa: entry.gpa,
-        })),
-      );
-    }
+    setProjects(
+      projects.map((entry) => ({
+        id: uid(),
+        name: entry.name,
+        tech: entry.tech,
+        link: entry.link,
+        website: entry.website,
+        bullets: entry.bullets.join("\n"),
+      })),
+    );
 
-    if (draft.certifications.length) {
-      setCertifications(draft.certifications.join("\n"));
-    }
+    setEducation(
+      education.map((entry) => ({
+        id: uid(),
+        institution: entry.institution,
+        degree: entry.degree,
+        year: entry.year,
+        gpa: entry.gpa,
+      })),
+    );
 
-    if (draft.awards.length) {
-      setAwards(draft.awards.join("\n"));
-    }
+    setCertifications(certifications.join("\n"));
+    setAwards(awards.join("\n"));
 
-    setOpenSections((prev) => {
-      const next = new Set(prev);
-
-      [
-        "contact",
-        draft.summary && "summary",
-        draft.experience.length && "experience",
-        draft.skills.length && "skills",
-        draft.projects.length && "projects",
-        draft.education.length && "education",
-        draft.certifications.length && "certifications",
-        draft.awards.length && "awards",
-      ]
-        .filter(Boolean)
-        .forEach((sectionId) => next.add(sectionId as string));
-
-      return next;
-    });
-
-    setSaveStatus("idle");
+    setOpenSections(
+      new Set(
+        [
+          "contact",
+          draft.summary && "summary",
+          experience.length && "experience",
+          skills.length && "skills",
+          projects.length && "projects",
+          education.length && "education",
+          certifications.length && "certifications",
+          awards.length && "awards",
+        ].filter(Boolean) as string[],
+      ),
+    );
   }, []);
 
   const handleImportResume = useCallback(

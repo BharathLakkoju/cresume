@@ -12,9 +12,9 @@ import {
 import { absoluteUrl, createMetadata } from "@/lib/seo";
 
 type RoleLandingPageProps = {
-  params: Promise<{
+  params: {
     slug: string;
-  }>;
+  };
 };
 
 export function generateStaticParams() {
@@ -24,7 +24,7 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: RoleLandingPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug } = params;
   const page = getRoleLandingPage(slug);
 
   if (!page) {
@@ -48,7 +48,7 @@ export async function generateMetadata({
 export default async function RoleLandingPage({
   params,
 }: RoleLandingPageProps) {
-  const { slug } = await params;
+  const { slug } = params;
   const page = getRoleLandingPage(slug);
 
   if (!page) {
