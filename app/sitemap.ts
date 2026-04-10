@@ -38,24 +38,14 @@ function getStaticBlogSlugs() {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
-  const blogSlugs = Array.from(
-    new Set([
-      ...getStaticBlogSlugs(),
-      ...roleLandingPages.map((page) => page.companionArticle.slug),
-    ]),
-  );
-
   const staticSitemap = staticRoutes.map((route) => ({
     url: absoluteUrl(route.path),
-    lastModified,
     changeFrequency: route.changeFrequency as "weekly" | "yearly" | "monthly",
     priority: route.priority,
   }));
 
   const blogRoutes = blogSlugs.map((slug) => ({
     url: absoluteUrl(`/blog/${slug}`),
-    lastModified,
     changeFrequency: "monthly" as const,
     priority: 0.9,
   }));

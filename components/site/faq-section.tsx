@@ -1,4 +1,4 @@
-const faqs = [
+export const faqs = [
   {
     question: "How does atsprecise check ATS resume compatibility?",
     answer:

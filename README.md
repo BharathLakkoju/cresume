@@ -47,7 +47,8 @@ atsprecise is a deterministic resume evaluation tool built to help job seekers u
 git clone https://github.com/BharathLakkoju/atsprecise
 cd atsprecise
 npm install
-# Optional: copy .env.example to .env.local and add Supabase credentials
+# If you want to enable Supabase/auth/history features, create `.env.local`  
+# manually and add the required environment variables for your project. 
 npm run dev
 ```
 
