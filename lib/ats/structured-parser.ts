@@ -48,7 +48,7 @@ const SECTION_PATTERNS: Array<{ key: keyof ParsedResume; pattern: RegExp }> = [
   {
     key: "certifications",
     pattern:
-      /^(?:certifications?|licenses?|licenses?\s*(?:&|and)\s*certifications?|certifications?\s*(?:&|and)\s*licenses?)/i,  
+      /^(?:certifications?|licenses?|licenses?\s*(?:&|and)\s*certifications?|certifications?\s*(?:&|and)\s*licenses?)/i,
   },
 ];
 
@@ -57,8 +57,12 @@ const SECTION_PATTERNS: Array<{ key: keyof ParsedResume; pattern: RegExp }> = [
  * Lines before the first recognized heading are treated as contact info.
  */
 export function parseResumeSections(rawText: string): ParsedResume {
-  // Normalize form feeds (PDF page breaks) and carriage returns to newlines
-  const lines = rawText.replace(/\f/g, "\n").replace(/\r/g, "\n").split(/\n/);
+  // Normalize form feeds (PDF page breaks), Windows CRLF, and lone carriage returns to newlines
+  const lines = rawText
+    .replace(/\f/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split(/\n/);
   const result: ParsedResume = {
     contact: "",
     summary: "",
