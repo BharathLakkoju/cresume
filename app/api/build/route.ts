@@ -301,7 +301,6 @@ export async function POST(request: Request) {
     const aiResult = parseJsonFromModel<TailoringResult>(aiRawResponse);
 
     if (!aiResult || !aiResult.tailoredResume) {
-      console.error("[build] AI returned invalid structure:", aiRawResponse.slice(0, 500));
       return NextResponse.json(
         { error: "AI returned an unexpected response format. Please try again.", retryable: true },
         { status: 502 }
@@ -325,7 +324,7 @@ export async function POST(request: Request) {
             mode: "builder",
           })
           .then(({ error }) => {
-            if (error) console.error("[build] Failed to save evaluation:", error.message);
+            if (error) void error;
           });
       }
     }
@@ -336,7 +335,7 @@ export async function POST(request: Request) {
       processingMs: Date.now() - start,
     });
   } catch (err) {
-    console.error("[build] Unhandled error:", err);
+    void err;
     return NextResponse.json(
       { error: "An unexpected error occurred. Please try again." },
       { status: 500 }

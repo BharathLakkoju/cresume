@@ -74,8 +74,6 @@ export async function GET() {
     .single();
 
   if (error && error.code !== "PGRST116") {
-    // PGRST116 = no rows found (expected for new users)
-    console.error("[profile] GET error:", error.message);
     return NextResponse.json({ error: "Failed to load profile" }, { status: 500 });
   }
 
@@ -173,7 +171,6 @@ export async function PUT(request: Request) {
     .upsert(row, { onConflict: "user_id" });
 
   if (error) {
-    console.error("[profile] PUT error:", error.message);
     return NextResponse.json({ error: "Failed to save profile" }, { status: 500 });
   }
 

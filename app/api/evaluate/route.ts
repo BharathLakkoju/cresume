@@ -113,11 +113,6 @@ export async function POST(request: Request) {
     const { resume: trimmedResume, jd: trimmedJd } = summarizeInputs(resumeText, jdText);
     const userMessage = `## RESUME\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}`;
 
-    // ── DEBUG: log the exact payload being sent to the AI ─────────────
-    console.log("\n========== [evaluate] FULL USER MESSAGE TO AI ================");
-    console.log(userMessage);
-    console.log("==============================================================\n");
-
     let aiRawResponse: string | null;
     try {
       aiRawResponse = await callOpenRouter(
@@ -172,7 +167,6 @@ export async function POST(request: Request) {
     const aiResult = parseJsonFromModel<AiEvaluation>(aiRawResponse);
 
     if (!aiResult || typeof aiResult.overallScore !== "number" || !aiResult.breakdown) {
-      console.error("[evaluate] AI returned invalid evaluation structure:", aiRawResponse.slice(0, 500));
       return NextResponse.json(
         {
           error: "AI returned an unexpected response format. Please try again.",
@@ -228,16 +222,14 @@ export async function POST(request: Request) {
             mode: "analysis"
           })
           .then(({ error }) => {
-            if (error) console.error("[evaluate] Failed to save evaluation:", error.message);
+            if (error) void error;
           });
       }
     }
 
-    console.log(`[evaluate] AI-only evaluation completed in ${result.processingMs}ms | score: ${result.overallScore}`);
-
     return NextResponse.json(result);
   } catch (err) {
-    console.error("[evaluate] Unexpected error:", err);
+    void err;
     return NextResponse.json(
       { error: "An unexpected error occurred. Please try again.", retryable: true },
       { status: 500 }

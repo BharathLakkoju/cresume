@@ -6,8 +6,10 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { roleGuidesHubPath } from "@/lib/role-pages";
 
 const navLinks = [
+  { label: "Role Guides", href: roleGuidesHubPath, isRoute: true },
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/#workflow" },
   { label: "Pricing", href: "/#pricing" },
@@ -45,16 +47,26 @@ export function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              onClick={(e) => handleNavClick(e, link.href)}
-              className="transition-colors duration-200 hover:text-foreground"
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.isRoute ? (
+              <Link
+                key={link.label}
+                href={link.href as any}
+                className="transition-colors duration-200 hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={(e) => handleNavClick(e, link.href)}
+                className="transition-colors duration-200 hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ),
+          )}
         </nav>
 
         {/* Desktop Actions */}
@@ -94,18 +106,29 @@ export function Header() {
             className="overflow-hidden border-t border-[hsl(var(--border)/0.08)] bg-surface-base md:hidden"
           >
             <nav className="container flex flex-col gap-4 py-6">
-              {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  onClick={(e) =>
-                    handleNavClick(e, link.href, () => setMobileOpen(false))
-                  }
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) =>
+                link.isRoute ? (
+                  <Link
+                    key={link.label}
+                    href={link.href as any}
+                    onClick={() => setMobileOpen(false)}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    onClick={(e) =>
+                      handleNavClick(e, link.href, () => setMobileOpen(false))
+                    }
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.label}
+                  </a>
+                ),
+              )}
               <div className="flex flex-col gap-3 pt-4">
                 <Link
                   href="/auth"

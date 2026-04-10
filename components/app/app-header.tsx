@@ -8,6 +8,7 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { clearEvaluationSessionData } from "@/store/evaluation-store";
+import { clearProfileSessionData } from "@/store/profile-store";
 
 export function AppHeader() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export function AppHeader() {
   const handleSignOut = async () => {
     const supabase = getSupabaseBrowserClient();
     clearEvaluationSessionData();
+    clearProfileSessionData();
     if (!supabase) return;
     await supabase.auth.signOut();
     router.push("/");
