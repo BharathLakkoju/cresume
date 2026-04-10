@@ -46,7 +46,7 @@ export function AppHeader() {
           href="/"
           className="font-display text-lg font-bold tracking-tight text-foreground"
         >
-          ATS Precision
+          atsprecise
         </Link>
 
         <div className="flex items-center gap-4">

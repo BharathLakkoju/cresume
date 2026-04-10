@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
 import { LoadingProvider } from "@/components/providers/loading-provider";
+import { getSiteUrl, siteConfig } from "@/lib/seo";
 
 const bodyFont = Inter({
   subsets: ["latin"],
@@ -15,23 +16,50 @@ const displayFont = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "ATS Precision | AI-Powered ATS Resume Evaluator",
-  description:
-    "Engineered for absolute clarity. Evaluate your resume through the lens of modern ATS algorithms with mathematical rigor.",
-  keywords: [
-    "ATS resume checker",
-    "resume score tool",
-    "ATS evaluator",
-    "resume job match",
-    "resume optimization",
-  ],
-  openGraph: {
-    title: "ATS Precision — Engineered for Clarity",
-    description:
-      "A hiring-aligned ATS evaluator for realistic resume scoring, keyword gaps, and role-specific improvement ideas.",
-    type: "website",
+  metadataBase: getSiteUrl(),
+  applicationName: siteConfig.name,
+  title: {
+    default:
+      "atsprecise | AI ATS Resume Checker and Resume Optimization Platform",
+    template: "%s | atsprecise",
   },
-  metadataBase: new URL("https://atsprecision.example.com"),
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
+  alternates: {
+    canonical: "/",
+  },
+  category: "career",
+  classification: "Resume optimization and ATS analysis software",
+  referrer: "origin-when-cross-origin",
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  openGraph: {
+    title:
+      "atsprecise | AI ATS Resume Checker and Resume Optimization Platform",
+    description: siteConfig.description,
+    url: "/",
+    siteName: siteConfig.name,
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title:
+      "atsprecise | AI ATS Resume Checker and Resume Optimization Platform",
+    description: siteConfig.description,
+  },
 };
 
 export default function RootLayout({

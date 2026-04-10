@@ -40,7 +40,7 @@ export function Header() {
           href="/"
           className="font-display text-lg font-bold tracking-tight text-foreground"
         >
-          ATS Precision
+          atsprecise
         </Link>
 
         {/* Desktop Nav */}

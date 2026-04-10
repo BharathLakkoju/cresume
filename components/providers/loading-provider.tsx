@@ -58,7 +58,7 @@ function LoaderOverlay({ message }: { message: string }) {
           transition={{ duration: 0.35, delay: 0.05 }}
           className="font-display text-xl font-bold tracking-tight text-[#1a1c1c]"
         >
-          ATS Precision
+          atsprecise
         </motion.p>
 
         {/* Scanning progress bar */}
