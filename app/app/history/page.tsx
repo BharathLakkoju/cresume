@@ -21,32 +21,51 @@ export default function HistoryPage() {
     null,
   );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isResolvingSession, setIsResolvingSession] = useState(true);
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient();
-    if (!supabase) return;
+    if (!supabase) {
+      setIsResolvingSession(false);
+      return;
+    }
 
-    supabase.auth
-      .getUser()
-      .then(
-        async ({
-          data,
-        }: {
-          data: { user: import("@supabase/supabase-js").User | null };
-        }) => {
-          if (!data.user) return;
-          setIsLoggedIn(true);
+    let isActive = true;
 
-          const { data: rows } = await supabase
-            .from("user_evaluations")
-            .select("id, job_title, overall_score, mode, created_at")
-            .eq("user_id", data.user.id)
-            .order("created_at", { ascending: false })
-            .limit(20);
+    const loadHistory = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-          if (rows) setRemoteHistory(rows as RemoteEntry[]);
-        },
-      );
+      if (!isActive) return;
+
+      if (!user) {
+        setIsLoggedIn(false);
+        setRemoteHistory(null);
+        setIsResolvingSession(false);
+        return;
+      }
+
+      setIsLoggedIn(true);
+
+      const { data: rows } = await supabase
+        .from("user_evaluations")
+        .select("id, job_title, overall_score, mode, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (!isActive) return;
+
+      setRemoteHistory((rows as RemoteEntry[] | null) ?? []);
+      setIsResolvingSession(false);
+    };
+
+    void loadHistory();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const displayList =
@@ -65,12 +84,21 @@ export default function HistoryPage() {
           History
         </h1>
         <p className="mt-4 text-sm sm:text-base text-muted-foreground">
-          {isLoggedIn
-            ? "Your full evaluation history synced from the cloud."
-            : "Local session history. Sign in to sync evaluations across devices."}
+          {isResolvingSession
+            ? "Loading your evaluation history."
+            : isLoggedIn
+              ? "Your full evaluation history synced from the cloud."
+              : "Local session history. Sign in to sync evaluations across devices."}
         </p>
 
-        {displayList !== null ? (
+        {isResolvingSession ? (
+          <div className="mt-16 text-center">
+            <p className="label-sm text-muted-foreground">LOADING HISTORY</p>
+            <p className="mt-3 text-muted-foreground">
+              Fetching the latest evaluation records for this session.
+            </p>
+          </div>
+        ) : displayList !== null ? (
           displayList.length > 0 ? (
             <div className="mt-6 sm:mt-10 space-y-3 sm:space-y-4">
               {displayList.map((entry, index) => (
