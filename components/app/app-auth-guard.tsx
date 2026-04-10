@@ -6,6 +6,7 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { clearEvaluationSessionData } from "@/store/evaluation-store";
+import { clearProfileSessionData } from "@/store/profile-store";
 
 function isAnonymousTrialPath(pathname: string) {
   return pathname === "/app/upload" || pathname.startsWith("/app/upload/");
@@ -28,6 +29,7 @@ export function AppAuthGuard() {
 
       if (lastUserIdRef.current !== userId) {
         clearEvaluationSessionData();
+        clearProfileSessionData();
       }
 
       lastUserIdRef.current = userId;

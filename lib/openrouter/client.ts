@@ -59,7 +59,6 @@ export async function callOpenRouter(
 
     if (attempt > 0) {
       const delay = RETRY_DELAY_MS * attempt;
-      console.warn(`[OpenRouter] Retry ${attempt}/${MAX_RETRIES} with model ${currentModel} after ${delay}ms...`);
       await sleep(delay);
     }
 
@@ -91,8 +90,6 @@ export async function callOpenRouter(
 
       if (!response.ok) {
         const errText = await response.text().catch(() => response.statusText);
-        console.error(`[OpenRouter] HTTP ${response.status}: ${errText}`);
-
         if (response.status === 429 || response.status >= 500) {
           lastError = new Error(`HTTP ${response.status}: ${errText}`);
           continue;
@@ -154,20 +151,15 @@ export async function callOpenRouter(
       }
 
       if (!accumulated) {
-        console.warn("[OpenRouter] Empty streaming response, retrying...");
         lastError = new Error("Empty response from AI model");
         continue;
       }
 
-      const elapsed = Date.now();
-      console.log(`[OpenRouter] Streaming complete: ${accumulated.length} chars from ${currentModel}`);
       return accumulated;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        console.warn(`[OpenRouter] Request aborted (timeout or stall) for model ${currentModel}`);
         lastError = new Error(`Request timed out for model ${currentModel}`);
       } else {
-        console.error("[OpenRouter] Request failed:", error);
         lastError = error instanceof Error ? error : new Error(String(error));
       }
       continue;
@@ -176,7 +168,6 @@ export async function callOpenRouter(
     }
   }
 
-  console.error(`[OpenRouter] All ${MAX_RETRIES + 1} attempts failed. Last error:`, lastError?.message);
   return null;
 }
 
@@ -208,7 +199,6 @@ export function parseJsonFromModel<T>(raw: string): T | null {
 
     return JSON.parse(cleaned) as T;
   } catch {
-    console.error("[OpenRouter] Failed to parse JSON from model output:", raw.slice(0, 200));
     return null;
   }
 }

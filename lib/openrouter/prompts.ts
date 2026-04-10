@@ -136,3 +136,64 @@ Return ONLY this JSON (all fields required, empty arrays for missing sections):
 }
 
 Constraints: atsScore >= 95. Exactly 3 projects maximum (most JD-relevant). At least 3 issues and 3 changesApplied. Rewrite every experience bullet. All original sections must appear including awards if present.`;
+
+// ---------------------------------------------------------------------------
+// PROFILE PARSE PROMPT -- Extract structured profile data from resume text
+// ---------------------------------------------------------------------------
+
+export const PROFILE_PARSE_SYSTEM_PROMPT = `You are an expert resume parser. Extract ALL profile information from the provided resume text and return it as ONLY valid JSON -- no prose, no explanation, no markdown fences.
+
+## Rules
+- Extract information EXACTLY as written in the resume -- do NOT rephrase, summarise, or invent anything
+- For experience bullets: preserve the full sentence/phrase unchanged
+- For skills: group into logical categories (e.g. "Programming Languages", "Frameworks", "Tools & Platforms", "Cloud & DevOps", "Databases") -- each item is a clean skill name
+- For projects: extract the project name, tech stack, any URLs, and all description bullets
+- If a field is absent in the resume, use an empty string "" for scalar fields and [] for arrays
+- dates: use the exact string from the resume (e.g. "Jan 2022 – Present", "2019 – 2021")
+- gpa: use the exact string from the resume including label if present (e.g. "CGPA: 8.4/10", "3.8/4.0") -- empty string if not stated
+- linkedin / github: include the full URL with https:// prefix
+
+Return ONLY this JSON (all fields required):
+{
+  "name": "",
+  "email": "",
+  "phone": "",
+  "location": "",
+  "linkedin": "",
+  "github": "",
+  "summary": "",
+  "experience": [
+    {
+      "company": "",
+      "title": "",
+      "dates": "",
+      "location": "",
+      "bullets": [""]
+    }
+  ],
+  "skills": [
+    {
+      "category": "",
+      "items": [""]
+    }
+  ],
+  "projects": [
+    {
+      "name": "",
+      "tech": "",
+      "link": "",
+      "website": "",
+      "bullets": [""]
+    }
+  ],
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "year": "",
+      "gpa": ""
+    }
+  ],
+  "certifications": [""],
+  "awards": [""]
+}`;

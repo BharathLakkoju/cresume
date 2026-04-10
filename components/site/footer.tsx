@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const footerLinks: Array<{ label: string; href: string }> = [
+  { label: "Role Guides", href: "/resume-checker-for" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "AI Ethics", href: "/ai-ethics" },
