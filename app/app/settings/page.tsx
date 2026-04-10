@@ -85,7 +85,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="mt-4 text-base leading-7 text-muted-foreground">
-          Customize how ATS Precision analyzes and presents your results.
+          Customize how atsprecise analyzes and presents your results.
         </p>
 
         <div className="mt-10 space-y-8">

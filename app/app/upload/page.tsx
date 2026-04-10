@@ -319,7 +319,7 @@ export default function UploadPage() {
         isOpen={showAuthGate}
         onClose={() => setShowAuthGate(false)}
       />
-      <div className="p-4 sm:p-6 lg:p-10">
+      <div className="p-4 sm:p-6 lg:p-10 max-lg:mb-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

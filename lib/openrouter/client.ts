@@ -74,8 +74,8 @@ export async function callOpenRouter(
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
-          "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://atsprecision.app",
-          "X-Title": "ATS Precision"
+          "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.atsprecise.com",
+          "X-Title": "atsprecise"
         },
         body: JSON.stringify({
           model: currentModel,

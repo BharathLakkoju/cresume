@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "AI Ethics — ATS Precision",
+export const metadata: Metadata = createMetadata({
+  title: "AI Ethics",
   description:
-    "Our principles for responsible and transparent AI use in ATS Precision.",
-};
+    "Read the atsprecise principles for transparent, fair, and accountable AI-assisted resume analysis.",
+  path: "/ai-ethics",
+});
 
 export default function AiEthicsPage() {
   return (
@@ -26,7 +28,7 @@ export default function AiEthicsPage() {
               Transparency in AI Output
             </h2>
             <p className="leading-relaxed">
-              ATS Precision uses large language models (LLMs) to analyse resumes
+              atsprecise uses large language models (LLMs) to analyse resumes
               and job descriptions. We surface{" "}
               <strong className="text-foreground">explicit reasoning</strong>{" "}
               for every score and recommendation — not just numbers. You can
@@ -81,7 +83,7 @@ export default function AiEthicsPage() {
               Human Agency
             </h2>
             <p className="leading-relaxed">
-              ATS Precision is a tool to <em>augment</em> your judgement, not
+              atsprecise is a tool to <em>augment</em> your judgement, not
               replace it. We design every feature so that you remain in control:
             </p>
             <ul className="ml-6 list-disc space-y-2">

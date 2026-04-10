@@ -370,7 +370,7 @@ export default function ProfilePage() {
         .replace(/^-+|-+$/g, "");
 
       link.href = url;
-      link.download = `${safeName || "profile"}-ats-precision-export.json`;
+      link.download = `${safeName || "profile"}-atsprecise-export.json`;
       document.body.appendChild(link);
       link.click();
       link.remove();

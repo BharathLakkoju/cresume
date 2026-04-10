@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — ATS Precision",
-  description: "How ATS Precision collects, uses, and protects your data.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Privacy Policy",
+  description:
+    "How atsprecise collects, uses, stores, and protects candidate data.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (
@@ -24,7 +27,7 @@ export default function PrivacyPage() {
               1. Information We Collect
             </h2>
             <p className="leading-relaxed">
-              When you use ATS Precision, we may collect the following types of
+              When you use atsprecise, we may collect the following types of
               information:
             </p>
             <ul className="ml-6 list-disc space-y-2">
