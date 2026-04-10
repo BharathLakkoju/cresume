@@ -32,18 +32,14 @@ function getBlogSlugs() {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
-
   const staticSitemap = staticRoutes.map((route) => ({
     url: absoluteUrl(route.path),
-    lastModified,
     changeFrequency: route.changeFrequency as "weekly" | "yearly" | "monthly",
     priority: route.priority,
   }));
 
   const blogRoutes = getBlogSlugs().map((slug) => ({
     url: absoluteUrl(`/blog/${slug}`),
-    lastModified,
     changeFrequency: "monthly" as const,
     priority: 0.9,
   }));
