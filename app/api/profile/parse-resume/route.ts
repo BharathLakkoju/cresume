@@ -3,9 +3,18 @@ import { NextResponse } from "next/server";
 import { parseResumeFile } from "@/lib/ats/parser";
 import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
 import { PROFILE_PARSE_SYSTEM_PROMPT } from "@/lib/openrouter/prompts";
+import { getCurrentUser } from "@/lib/supabase/auth-helpers";
+import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { getSupabaseServerClient } from "@/lib/supabase/server";
 import type { ProfileData } from "@/app/api/profile/route";
 
-export const maxDuration = 30;
+export const maxDuration = 45;
+
+const FREE_USE_LIMIT = 2;
+
+type UsageClient =
+  | NonNullable<ReturnType<typeof getSupabaseServiceClient>>
+  | NonNullable<Awaited<ReturnType<typeof getSupabaseServerClient>>>;
 
 /**
  * POST /api/profile/parse-resume
@@ -18,6 +27,12 @@ export const maxDuration = 30;
  * beyond what the user uploaded in that request.
  */
 export async function POST(request: Request) {
+  let anonymousUsageContext: {
+    ip: string;
+    currentCount: number;
+    client: UsageClient;
+  } | null = null;
+
   /* ── 1. Read multipart form ── */
   let formData: FormData;
   try {
@@ -68,6 +83,36 @@ export async function POST(request: Request) {
     );
   }
 
+  /* ── 2b. Rate-limit gate (IP-based for anonymous users) ── */
+  const user = await getCurrentUser();
+  if (!user) {
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+    const usageClient =
+      getSupabaseServiceClient() ?? (await getSupabaseServerClient());
+
+    if (usageClient) {
+      const { data: row } = await usageClient
+        .from("ip_usage")
+        .select("use_count")
+        .eq("ip_address", ip)
+        .maybeSingle();
+
+      if (row && row.use_count >= FREE_USE_LIMIT) {
+        return NextResponse.json(
+          { error: "FREE_LIMIT_REACHED", usesLeft: 0 },
+          { status: 403 },
+        );
+      }
+
+      anonymousUsageContext = {
+        ip,
+        currentCount: row?.use_count ?? 0,
+        client: usageClient,
+      };
+    }
+  }
+
   /* ── 3. Call OpenRouter to extract structured profile data ── */
   let rawAiResponse: string | null;
   try {
@@ -94,6 +139,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "AI parsing returned an empty response. Please try again." },
       { status: 503 },
+    );
+  }
+
+  if (anonymousUsageContext) {
+    await anonymousUsageContext.client.from("ip_usage").upsert(
+      {
+        ip_address: anonymousUsageContext.ip,
+        use_count: anonymousUsageContext.currentCount + 1,
+        last_used_at: new Date().toISOString(),
+      },
+      { onConflict: "ip_address" },
     );
   }
 

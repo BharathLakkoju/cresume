@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import Link from "next/link";
 
 const footerLinks: Array<{ label: string; href: string }> = [
@@ -22,7 +23,7 @@ export function Footer() {
           {footerLinks.map((link) => (
             <Link
               key={link.label}
-              href={link.href as any}
+              href={link.href as Route<string>}
               className="label-sm transition-colors hover:text-foreground"
             >
               {link.label}

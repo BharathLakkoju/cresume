@@ -48,7 +48,7 @@ const SECTION_PATTERNS: Array<{ key: keyof ParsedResume; pattern: RegExp }> = [
   {
     key: "certifications",
     pattern:
-      /^(?:certifications?|(?:licenses?\s*(?:&|and)\s*)?certifications?|professional\s*development|achievements?(?:\s*(?:&|and)\s*(?:awards?|recognition))?|awards?(?:\s*(?:&|and)\s*(?:achievements?|honors?))?|honors?(?:\s*(?:&|and)\s*awards?)?|accomplishments?|recognitions?|publications?)/i,
+      /^(?:certifications?|licenses?|licenses?\s*(?:&|and)\s*certifications?|certifications?\s*(?:&|and)\s*licenses?)/i,  
   },
 ];
 
