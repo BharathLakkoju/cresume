@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
+
 import { Sidebar } from "@/components/app/sidebar";
 import { AppAuthGuard } from "@/components/app/app-auth-guard";
+import { createMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = createMetadata({
+  title: "Application",
+  description:
+    "Private atsprecise application area for resume uploads, analysis history, and account settings.",
+  path: "/app",
+  noIndex: true,
+});
 
 export default function AppSectionLayout({
   children,

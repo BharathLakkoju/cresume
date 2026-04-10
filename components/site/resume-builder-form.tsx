@@ -211,7 +211,7 @@ export function ResumeBuilderForm({
 
   /* ── Main render ── */
   return (
-    <div className="mx-auto w-full max-w-xl space-y-5">
+    <div className="mx-auto w-full max-w-xl space-y-5 max-lg:mb-10">
       {/* Profile status */}
       {profileName ? (
         <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-400">

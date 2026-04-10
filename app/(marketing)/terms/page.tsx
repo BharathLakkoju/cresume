@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { createMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Terms of Service — ATS Precision",
-  description: "Terms and conditions for using ATS Precision.",
-};
+export const metadata: Metadata = createMetadata({
+  title: "Terms of Service",
+  description: "Terms and conditions for using atsprecise.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
@@ -24,9 +26,9 @@ export default function TermsPage() {
               1. Acceptance of Terms
             </h2>
             <p className="leading-relaxed">
-              By accessing or using ATS Precision (&ldquo;the Service&rdquo;),
-              you agree to be bound by these Terms of Service. If you do not
-              agree, please do not use the Service.
+              By accessing or using atsprecise (&ldquo;the Service&rdquo;), you
+              agree to be bound by these Terms of Service. If you do not agree,
+              please do not use the Service.
             </p>
           </section>
 
@@ -35,7 +37,7 @@ export default function TermsPage() {
               2. Description of Service
             </h2>
             <p className="leading-relaxed">
-              ATS Precision is an AI-powered resume analysis platform that
+              atsprecise is an AI-powered resume analysis platform that
               evaluates resumes against job descriptions, provides tailoring
               suggestions, and helps users build structured resume profiles. The
               Service uses large language models via third-party APIs to
@@ -97,7 +99,7 @@ export default function TermsPage() {
               5. AI-Generated Content
             </h2>
             <p className="leading-relaxed">
-              ATS Precision uses AI language models to generate analysis and
+              atsprecise uses AI language models to generate analysis and
               recommendations. These outputs are for informational and advisory
               purposes only. We do not guarantee employment outcomes, interview
               opportunities, or the accuracy of any AI-generated evaluation.
@@ -111,10 +113,10 @@ export default function TermsPage() {
               6. Intellectual Property
             </h2>
             <p className="leading-relaxed">
-              All content, design, and code comprising the ATS Precision
-              platform is owned by ATS Precision and protected by applicable
-              intellectual property laws. You retain ownership of the resume
-              content and documents you upload.
+              All content, design, and code comprising the atsprecise platform
+              is owned by atsprecise and protected by applicable intellectual
+              property laws. You retain ownership of the resume content and
+              documents you upload.
             </p>
           </section>
 
@@ -123,7 +125,7 @@ export default function TermsPage() {
               7. Limitation of Liability
             </h2>
             <p className="leading-relaxed">
-              To the maximum extent permitted by law, ATS Precision shall not be
+              To the maximum extent permitted by law, atsprecise shall not be
               liable for any indirect, incidental, special, consequential, or
               punitive damages arising from your use of the Service, including
               loss of employment opportunities or decisions made based on

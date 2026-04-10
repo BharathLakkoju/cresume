@@ -46,7 +46,7 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
   const scoreWords = scoreLabel.split(" ");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-lg:mb-10">
       {/* ── TOP ROW ── */}
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* Left: Score headline */}

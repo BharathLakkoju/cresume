@@ -1,7 +1,7 @@
 ATS Resume Evaluator (AI-Powered Hiring Alignment Tool)
 1. 🧠 Product Overview
 
-Product Name: ATS Precision
+Product Name: atsprecise
 Type: Web Application (SEO-optimized SaaS tool)
 Target Users:
 
