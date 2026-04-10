@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/components/site/cta-section";
-import { FaqSection } from "@/components/site/faq-section";
+import { faqs, FaqSection } from "@/components/site/faq-section";
 import { FeaturesSection } from "@/components/site/features-section";
 import { HeroSection } from "@/components/site/hero-section";
 import { HowItWorksSection } from "@/components/site/how-it-works-section";
@@ -25,32 +25,14 @@ export const metadata: Metadata = createMetadata({
 const faqSchema = {
   "@context": "https://schema.org",
   "@type": "FAQPage",
-  mainEntity: [
-    {
-      "@type": "Question",
-      name: "How does atsprecise check ATS resume compatibility?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "atsprecise compares your resume against a target job description, evaluates keyword alignment, experience relevance, section quality, and readability, then returns a detailed match report with concrete gaps and rewrite guidance.",
-      },
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
     },
-    {
-      "@type": "Question",
-      name: "Is atsprecise only a keyword scanner?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "No. It checks keywords, but it also looks at evidence quality, role alignment, resume structure, and whether your experience bullets communicate impact in the language hiring teams expect.",
-      },
-    },
-    {
-      "@type": "Question",
-      name: "What makes an ATS-friendly resume?",
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: "An ATS-friendly resume uses clear section headings, readable formatting, strong keyword relevance, and concise impact-focused bullet points that prove your fit for the role you are targeting.",
-      },
-    },
-  ],
+  })),
 };
 
 const websiteSchema = {
