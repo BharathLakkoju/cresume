@@ -1,9 +1,11 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { AtsEvaluationResult } from "@/lib/ats/types";
+
+export const EVALUATION_HISTORY_STORAGE_KEY = "ats-precision-history";
 
 interface HistoryEntry {
   id: string;
@@ -16,13 +18,18 @@ interface EvaluationStore {
   latestResult: AtsEvaluationResult | null;
   history: HistoryEntry[];
   setLatestResult: (jobTitleHint: string, result: AtsEvaluationResult) => void;
+  clearResults: () => void;
 }
+
+const initialEvaluationState = {
+  latestResult: null,
+  history: [] as HistoryEntry[]
+};
 
 export const useEvaluationStore = create<EvaluationStore>()(
   persist(
     (set) => ({
-      latestResult: null,
-      history: [],
+      ...initialEvaluationState,
       setLatestResult: (jobTitleHint, result) =>
         set((state) => ({
           latestResult: result,
@@ -35,10 +42,26 @@ export const useEvaluationStore = create<EvaluationStore>()(
             },
             ...state.history
           ].slice(0, 8)
-        }))
+        })),
+      clearResults: () => set(initialEvaluationState)
     }),
     {
-      name: "ats-precision-history"
+      name: EVALUATION_HISTORY_STORAGE_KEY,
+      storage: createJSONStorage(() => sessionStorage)
     }
   )
 );
+
+export function clearEvaluationSessionData() {
+  useEvaluationStore.getState().clearResults();
+
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(EVALUATION_HISTORY_STORAGE_KEY);
+  } catch {
+    // Ignore storage failures in restricted browser modes.
+  }
+}

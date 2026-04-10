@@ -7,6 +7,7 @@ import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { clearEvaluationSessionData } from "@/store/evaluation-store";
 
 export function AppHeader() {
   const router = useRouter();
@@ -16,18 +17,23 @@ export function AppHeader() {
     const supabase = getSupabaseBrowserClient();
     if (!supabase) return;
 
-    supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => setUser(data.user));
+    supabase.auth
+      .getUser()
+      .then(({ data }: { data: { user: User | null } }) => setUser(data.user));
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
       (_event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null);
-      }
+      },
     );
     return () => subscription.unsubscribe();
   }, []);
 
   const handleSignOut = async () => {
     const supabase = getSupabaseBrowserClient();
+    clearEvaluationSessionData();
     if (!supabase) return;
     await supabase.auth.signOut();
     router.push("/");
@@ -36,7 +42,10 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-[hsl(var(--border)/0.08)] bg-surface-base">
       <div className="flex h-16 items-center justify-between gap-6 px-6">
-        <Link href="/" className="font-display text-lg font-bold tracking-tight text-foreground">
+        <Link
+          href="/"
+          className="font-display text-lg font-bold tracking-tight text-foreground"
+        >
           ATS Precision
         </Link>
 
