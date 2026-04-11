@@ -380,9 +380,7 @@ export default function ProfilePage() {
       .map((a) => a.trim())
       .filter(Boolean),
   });
-
   const applyImportedProfile = useCallback((draft: ProfileData) => {
-    if (draft.name) setName(draft.name);
     const experience = draft.experience ?? [];
     const skills = draft.skills ?? [];
     const projects = draft.projects ?? [];
@@ -587,51 +585,60 @@ export default function ProfilePage() {
 
   /* ── Load profile on mount ── */
   const loadProfile = useCallback(async () => {
+    const restoreFromStoreDraft = () => {
+      const storeDraft = initialDraftRef.current;
+      if (!storeDraft) return false;
+
+      setName(storeDraft.name);
+      setEmail(storeDraft.email);
+      setPhone(storeDraft.phone);
+      setContactLocation(storeDraft.location);
+      setLinkedin(storeDraft.linkedin);
+      setGithub(storeDraft.github);
+      setSummary(storeDraft.summary);
+      if (storeDraft.experiences.length)
+        setExperiences(
+          storeDraft.experiences.map((e) => ({ ...e, id: uid() })),
+        );
+      if (storeDraft.skills.length)
+        setSkills(storeDraft.skills.map((s) => ({ ...s, id: uid() })));
+      if (storeDraft.projects.length)
+        setProjects(storeDraft.projects.map((p) => ({ ...p, id: uid() })));
+      if (storeDraft.education.length)
+        setEducation(storeDraft.education.map((e) => ({ ...e, id: uid() })));
+      if (storeDraft.certifications)
+        setCertifications(storeDraft.certifications);
+      if (storeDraft.awards) setAwards(storeDraft.awards);
+
+      // Open sections that have restored data so the user sees them immediately.
+      setOpenSections(() => {
+        const s = new Set<string>(["contact"]);
+        if (storeDraft.summary) s.add("summary");
+        if (storeDraft.experiences.length) s.add("experience");
+        if (storeDraft.skills.length) s.add("skills");
+        if (storeDraft.projects.length) s.add("projects");
+        if (storeDraft.education.length) s.add("education");
+        if (storeDraft.certifications) s.add("certifications");
+        if (storeDraft.awards) s.add("awards");
+        return s;
+      });
+
+      return true;
+    };
+
+    let canSyncDraft = false;
+
     try {
       const res = await fetch("/api/profile");
-      if (!res.ok) return;
+      if (!res.ok) {
+        canSyncDraft = restoreFromStoreDraft();
+        return;
+      }
+
       const { profile } = await res.json();
       if (!profile) {
-        // No saved profile in DB — try to restore from the session store draft.
-        const storeDraft = initialDraftRef.current;
-        if (storeDraft) {
-          setName(storeDraft.name);
-          setEmail(storeDraft.email);
-          setPhone(storeDraft.phone);
-          setContactLocation(storeDraft.location);
-          setLinkedin(storeDraft.linkedin);
-          setGithub(storeDraft.github);
-          setSummary(storeDraft.summary);
-          if (storeDraft.experiences.length)
-            setExperiences(
-              storeDraft.experiences.map((e) => ({ ...e, id: uid() })),
-            );
-          if (storeDraft.skills.length)
-            setSkills(storeDraft.skills.map((s) => ({ ...s, id: uid() })));
-          if (storeDraft.projects.length)
-            setProjects(storeDraft.projects.map((p) => ({ ...p, id: uid() })));
-          if (storeDraft.education.length)
-            setEducation(
-              storeDraft.education.map((e) => ({ ...e, id: uid() })),
-            );
-          if (storeDraft.certifications)
-            setCertifications(storeDraft.certifications);
-          if (storeDraft.awards) setAwards(storeDraft.awards);
-
-          // Open sections that have restored data so the user sees them immediately.
-          setOpenSections(() => {
-            const s = new Set<string>(["contact"]);
-            if (storeDraft.summary) s.add("summary");
-            if (storeDraft.experiences.length) s.add("experience");
-            if (storeDraft.skills.length) s.add("skills");
-            if (storeDraft.projects.length) s.add("projects");
-            if (storeDraft.education.length) s.add("education");
-            if (storeDraft.certifications) s.add("certifications");
-            if (storeDraft.awards) s.add("awards");
-            return s;
-          });
-        }
-        setLoading(false);
+        restoreFromStoreDraft();
+        canSyncDraft = true;
         return;
       }
 
@@ -729,10 +736,13 @@ export default function ProfilePage() {
       if (profile.awards?.length) {
         setAwards(profile.awards.join("\n"));
       }
+
+      canSyncDraft = true;
     } catch (err) {
       void err;
+      canSyncDraft = restoreFromStoreDraft();
     } finally {
-      hasLoadedRef.current = true;
+      hasLoadedRef.current = canSyncDraft;
       setLoading(false);
     }
   }, []);
