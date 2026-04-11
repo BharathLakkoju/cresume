@@ -1,7 +1,5 @@
 export { roleGuidesHubPath } from "@/lib/route-paths";
 
-import type { Route } from "next";
-
 type RoleCompanionArticle = {
   slug: string;
   title: string;
@@ -23,7 +21,7 @@ export type RoleLandingPage = {
   metaDescription: string;
   intro: string;
   audience: string;
-  path: Route<string>;
+  path: string;
   keywords: string[];
   matchSignals: string[];
   rewritePriorities: string[];

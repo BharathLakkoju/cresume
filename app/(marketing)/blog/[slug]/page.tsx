@@ -106,7 +106,7 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href={page.path}
+              href={page.path as Route<string>}
               className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
               Open role guide
@@ -169,9 +169,11 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
             {relatedArticles.slice(0, 6).map((relatedPage) => (
               <Link
                 key={relatedPage.slug}
-                href={getRoleCompanionArticlePath(
+                href={
+                  getRoleCompanionArticlePath(
                     relatedPage.companionArticle.slug,
-                  )}
+                  ) as Route<string>
+                }
                 className="rounded-3xl border border-[hsl(var(--border)/0.12)] bg-surface-lowest p-6 transition-transform duration-200 hover:-translate-y-1"
               >
                 <p className="label-sm text-muted-foreground">
