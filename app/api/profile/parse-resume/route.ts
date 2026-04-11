@@ -166,6 +166,15 @@ export async function POST(request: Request) {
     );
   }
 
+  /* ── 4. Parse and validate the JSON returned by the AI ── */
+  const parsed = parseJsonFromModel<ProfileData>(rawAiResponse);
+  if (!parsed) {
+    return NextResponse.json(
+      { error: "Failed to parse AI response. Please try again." },
+      { status: 500 },
+    );
+  }
+
   if (anonymousUsageContext) {
     await anonymousUsageContext.client.from("ip_usage").upsert(
       {
@@ -174,15 +183,6 @@ export async function POST(request: Request) {
         last_used_at: new Date().toISOString(),
       },
       { onConflict: "ip_address" },
-    );
-  }
-
-  /* ── 4. Parse and validate the JSON returned by the AI ── */
-  const parsed = parseJsonFromModel<ProfileData>(rawAiResponse);
-  if (!parsed) {
-    return NextResponse.json(
-      { error: "Failed to parse AI response. Please try again." },
-      { status: 500 },
     );
   }
 
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
       bullets: (Array.isArray(e.bullets) ? e.bullets : [])
         .map((b) => String(b).trim())
         .filter(Boolean),
-    })),
+    })).filter((e) => e.company || e.title || e.dates || e.location || e.bullets.length),
     skills: (Array.isArray(parsed.skills) ? parsed.skills : []).map((s) => ({
       category: String(s.category ?? "").trim(),
       items: (Array.isArray(s.items) ? s.items : [])

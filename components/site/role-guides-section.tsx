@@ -1,4 +1,3 @@
-import type { Route } from "next";
 import Link from "next/link";
 
 import { roleLandingPages } from "@/lib/role-pages";
@@ -34,7 +33,7 @@ export function RoleGuidesSection({
           {pages.map((page) => (
             <Link
               key={page.slug}
-              href={page.path as Route<string>}
+              href={page.path}
               className="group rounded-3xl border border-[hsl(var(--border)/0.12)] bg-surface-lowest p-8 transition-transform duration-200 hover:-translate-y-1"
             >
               <p className="label-sm text-muted-foreground">{page.eyebrow}</p>
