@@ -1,0 +1,1 @@
+export const roleGuidesHubPath = "/resume-checker-for" as const;

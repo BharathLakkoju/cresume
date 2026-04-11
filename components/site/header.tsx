@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { roleGuidesHubPath } from "@/lib/role-pages";
+import { roleGuidesHubPath } from "@/lib/route-paths";
 
 const navLinks = [
   { label: "Role Guides", href: roleGuidesHubPath, isRoute: true },

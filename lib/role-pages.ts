@@ -1,3 +1,5 @@
+export { roleGuidesHubPath } from "@/lib/route-paths";
+
 type RoleCompanionArticle = {
   slug: string;
   title: string;
@@ -826,8 +828,6 @@ export const roleLandingPages: RoleLandingPage[] = [
     },
   },
 ];
-
-export const roleGuidesHubPath = "/resume-checker-for" as const;
 
 export function getRoleLandingPage(slug: string) {
   return roleLandingPages.find((page) => page.slug === slug);

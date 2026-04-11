@@ -262,6 +262,8 @@ export default function ProfilePage() {
   const setProfileDraft = useProfileStore((state) => state.setDraft);
   /** Prevents the sync effect from writing empty initial state to the store. */
   const hasLoadedRef = useRef(false);
+  /** Skips the first sync pass after hydration to avoid writing untouched form defaults. */
+  const hasSkippedInitialSyncRef = useRef(false);
   /** Snapshot of the store draft captured once; read by loadProfile on mount without subscribing to store updates. */
   const initialDraftRef = useRef(useProfileStore.getState().draft);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -310,6 +312,14 @@ export default function ProfilePage() {
     null,
   );
   const [showImportSaveNotice, setShowImportSaveNotice] = useState(false);
+
+  const mapImportError = (message?: string) => {
+    if (message === "FREE_LIMIT_REACHED") {
+      return "You have reached the free resume import limit. Sign in to continue importing resumes.";
+    }
+
+    return message ?? "AI parsing failed. Please try again.";
+  };
 
   const getLocalSettingsSnapshot = () => {
     if (typeof window === "undefined") return null;
@@ -484,7 +494,7 @@ export default function ProfilePage() {
         };
 
         if (!res.ok || !data.profile) {
-          throw new Error(data.error ?? "AI parsing failed. Please try again.");
+          throw new Error(mapImportError(data.error));
         }
 
         applyImportedProfile(data.profile);
@@ -626,19 +636,16 @@ export default function ProfilePage() {
       return true;
     };
 
-    let canSyncDraft = false;
-
     try {
       const res = await fetch("/api/profile");
       if (!res.ok) {
-        canSyncDraft = restoreFromStoreDraft();
+        restoreFromStoreDraft();
         return;
       }
 
       const { profile } = await res.json();
       if (!profile) {
         restoreFromStoreDraft();
-        canSyncDraft = true;
         return;
       }
 
@@ -736,13 +743,11 @@ export default function ProfilePage() {
       if (profile.awards?.length) {
         setAwards(profile.awards.join("\n"));
       }
-
-      canSyncDraft = true;
     } catch (err) {
       void err;
-      canSyncDraft = restoreFromStoreDraft();
+      restoreFromStoreDraft();
     } finally {
-      hasLoadedRef.current = canSyncDraft;
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, []);
@@ -755,6 +760,11 @@ export default function ProfilePage() {
   /* Runs after every change so unsaved data survives navigation within the session. */
   useEffect(() => {
     if (!hasLoadedRef.current) return;
+    if (!hasSkippedInitialSyncRef.current) {
+      hasSkippedInitialSyncRef.current = true;
+      return;
+    }
+
     setProfileDraft({
       name,
       email,
