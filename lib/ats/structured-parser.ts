@@ -20,12 +20,36 @@ export interface ParsedResume {
 }
 
 const SECTION_PATTERNS: Array<{ key: keyof ParsedResume; pattern: RegExp }> = [
-  { key: "summary",        pattern: /^(?:summary|profile|about\s*me|objective|professional\s*summary)/i },
-  { key: "experience",     pattern: /^(?:experience|work\s*(?:experience|history)|employment|professional\s*experience)/i },
-  { key: "skills",         pattern: /^(?:skills|technical\s*skills|core\s*competencies|technologies|tools?\s*(?:&|and)\s*technologies)/i },
-  { key: "projects",       pattern: /^(?:projects|personal\s*projects|key\s*projects|selected\s*projects)/i },
-  { key: "education",      pattern: /^(?:education|academic|qualifications)/i },
-  { key: "certifications", pattern: /^(?:certifications?|licenses?\s*(?:&|and)\s*certifications?|professional\s*development)/i },
+  {
+    key: "summary",
+    pattern:
+      /^(?:summary|profile|about\s*me|objective|career\s*objective|professional\s*(?:summary|profile|objective)|personal\s*statement|overview|introduction|executive\s*summary)/i,
+  },
+  {
+    key: "experience",
+    pattern:
+      /^(?:experience|work\s*(?:experience|history)|employment(?:\s*history)?|professional\s*experience|career\s*(?:history|background|experience)|positions?(?:\s*held)?|internship[s]?(?:\s*experience)?|relevant\s*experience|industry\s*experience)/i,
+  },
+  {
+    key: "skills",
+    pattern:
+      /^(?:skills|technical\s*skills|core\s*competencies|competencies|technologies|tools?(?:\s*(?:&|and)\s*technologies)?|key\s*skills|areas?\s*of\s*(?:expertise|competence)|professional\s*skills|core\s*skills|technical\s*expertise|expertise|technical\s*(?:abilities|proficiencies|knowledge)|technologies\s*(?:&|and)\s*tools?)/i,
+  },
+  {
+    key: "projects",
+    pattern:
+      /^(?:projects|personal\s*projects|key\s*projects|selected\s*projects|notable\s*projects|side\s*projects|academic\s*projects|portfolio|project\s*experience)/i,
+  },
+  {
+    key: "education",
+    pattern:
+      /^(?:education|academic(?:\s*(?:background|details|history|qualifications?))?|qualifications?|educational(?:\s*(?:background|details|qualifications?))?|scholastics?|degrees?)/i,
+  },
+  {
+    key: "certifications",
+    pattern:
+      /^(?:certifications?|licenses?|licenses?\s*(?:&|and)\s*certifications?|certifications?\s*(?:&|and)\s*licenses?)/i,
+  },
 ];
 
 /**
@@ -33,7 +57,12 @@ const SECTION_PATTERNS: Array<{ key: keyof ParsedResume; pattern: RegExp }> = [
  * Lines before the first recognized heading are treated as contact info.
  */
 export function parseResumeSections(rawText: string): ParsedResume {
-  const lines = rawText.split(/\n/);
+  // Normalize form feeds (PDF page breaks), Windows CRLF, and lone carriage returns to newlines
+  const lines = rawText
+    .replace(/\f/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split(/\n/);
   const result: ParsedResume = {
     contact: "",
     summary: "",
@@ -165,12 +194,6 @@ export function buildStructuredPromptInputs(
 ): { resume: string; jd: string } {
   const j = parseJDSections(jdText);
 
-  // ── DEBUG: raw resume ──────────────────────────────────────────────────
-  console.log("\n========== [structured-parser] RAW RESUME SENT TO AI ===========");
-  console.log(`Total chars: ${resumeText.length}`);
-  console.log(resumeText);
-  console.log("=================================================================\n");
-
   // Build structured JD representation
   const jdParts: string[] = [];
 
@@ -181,11 +204,6 @@ export function buildStructuredPromptInputs(
   if (j.other)            jdParts.push(`[OTHER]\n${j.other}`);
 
   const structuredJd = jdParts.join("\n\n");
-
-  // ── DEBUG: parsed JD sections ──────────────────────────────────────────
-  console.log("\n========== [structured-parser] PARSED JD SENT TO AI ============");
-  console.log(structuredJd || "(EMPTY — no JD sections detected!)");
-  console.log("=================================================================\n");
 
   return {
     resume: resumeText,
