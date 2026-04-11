@@ -1,6 +1,6 @@
 import { parseResumeSections } from "@/lib/ats/structured-parser";
 
-export type ImportedProfileDraft = {
+type ImportedProfileDraft = {
   name: string;
   email: string;
   phone: string;
