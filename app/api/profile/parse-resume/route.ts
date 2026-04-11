@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { parseResumeFile } from "@/lib/ats/parser";
 import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
-import { PROFILE_PARSE_SYSTEM_PROMPT } from "@/lib/openrouter/prompts";
+import { PROFILE_PARSE_SYSTEM_PROMPT, summarizeInputs } from "@/lib/openrouter/prompts";
 import { getCurrentUser } from "@/lib/supabase/auth-helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -11,10 +11,32 @@ import type { ProfileData } from "@/app/api/profile/route";
 export const maxDuration = 45;
 
 const FREE_USE_LIMIT = 2;
+const MAX_RESUME_INPUT_CHARS = 40_000;
 
 type UsageClient =
   | NonNullable<ReturnType<typeof getSupabaseServiceClient>>
   | NonNullable<Awaited<ReturnType<typeof getSupabaseServerClient>>>;
+
+function getClientIp(request: Request): string | null {
+  const candidates = [
+    request.headers.get("x-forwarded-for"),
+    request.headers.get("x-real-ip"),
+    request.headers.get("cf-connecting-ip"),
+    request.headers.get("x-vercel-forwarded-for"),
+    request.headers.get("true-client-ip"),
+    request.headers.get("x-client-ip"),
+  ];
+
+  for (const headerValue of candidates) {
+    if (!headerValue) continue;
+    const ip = headerValue.split(",")[0]?.trim();
+    if (ip && ip.toLowerCase() !== "unknown") {
+      return ip;
+    }
+  }
+
+  return null;
+}
 
 /**
  * POST /api/profile/parse-resume
@@ -86,12 +108,11 @@ export async function POST(request: Request) {
   /* ── 2b. Rate-limit gate (IP-based for anonymous users) ── */
   const user = await getCurrentUser();
   if (!user) {
-    const forwarded = request.headers.get("x-forwarded-for");
-    const ip = forwarded?.split(",")[0]?.trim() || "unknown";
+    const ip = getClientIp(request);
     const usageClient =
       getSupabaseServiceClient() ?? (await getSupabaseServerClient());
 
-    if (usageClient) {
+    if (usageClient && ip) {
       const { data: row } = await usageClient
         .from("ip_usage")
         .select("use_count")
@@ -114,11 +135,14 @@ export async function POST(request: Request) {
   }
 
   /* ── 3. Call OpenRouter to extract structured profile data ── */
+  const { resume: structuredResumeText } = summarizeInputs(resumeText, "");
+  const modelResumeInput = structuredResumeText.trim().slice(0, MAX_RESUME_INPUT_CHARS);
+
   let rawAiResponse: string | null;
   try {
     rawAiResponse = await callOpenRouter(
       PROFILE_PARSE_SYSTEM_PROMPT,
-      `Extract all profile information from this resume:\n\n${resumeText}`,
+      `Extract all profile information from this resume:\n\n${modelResumeInput}`,
       undefined, // use default model
       45_000,    // 45 s timeout — resume parsing can be verbose
       4000,      // up to 4k tokens for a full resume
