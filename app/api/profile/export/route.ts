@@ -47,22 +47,15 @@ export async function GET() {
   ]);
 
   if (profileResult.error) {
-    console.error("[profile/export] Failed to load profile:", profileResult.error.message);
     return NextResponse.json({ error: "Failed to export profile data" }, { status: 500 });
   }
 
   if (evaluationsResult.error && !isMissingTableError(evaluationsResult.error)) {
-    console.error(
-      "[profile/export] Failed to load evaluations:",
-      evaluationsResult.error.message,
-    );
     return NextResponse.json({ error: "Failed to export profile data" }, { status: 500 });
   }
 
   if (evaluationsResult.error && isMissingTableError(evaluationsResult.error)) {
-    console.warn(
-      "[profile/export] user_evaluations table missing; exporting without evaluation history.",
-    );
+    // user_evaluations table missing; export without evaluation history
   }
 
   const evaluations = isMissingTableError(evaluationsResult.error)

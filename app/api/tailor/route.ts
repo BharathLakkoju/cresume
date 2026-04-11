@@ -129,9 +129,7 @@ export async function POST(request: Request) {
     let resumeText: string;
     try {
       resumeText = await parseResumeFile(resumeFile);
-      console.log(`[tailor] Extracted ${resumeText.length} characters from resume`);
     } catch (parseError) {
-      console.error("[tailor] Resume parsing error:", parseError);
       return NextResponse.json(
         {
           error:
@@ -153,11 +151,6 @@ export async function POST(request: Request) {
     /* ── 4. Call AI for tailoring ─────────────────────────────── */
     const { resume: trimmedResume, jd: trimmedJd } = summarizeInputs(resumeText, rawJd);
     const userMessage = `## RESUME\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}`;
-
-    // ── DEBUG: log the exact payload being sent to the AI ─────────────
-    console.log("\n========== [tailor] FULL USER MESSAGE TO AI ================");
-    console.log(userMessage);
-    console.log("=============================================================\n");
 
     let aiRawResponse: string | null;
     try {
@@ -200,7 +193,6 @@ export async function POST(request: Request) {
     const aiResult = parseJsonFromModel<TailoringResult>(aiRawResponse);
 
     if (!aiResult || !aiResult.tailoredResume) {
-      console.error("[tailor] AI returned invalid structure:", aiRawResponse.slice(0, 500));
       return NextResponse.json(
         {
           error: "AI returned an unexpected response format. Please try again.",
@@ -227,13 +219,12 @@ export async function POST(request: Request) {
             mode: "tailoring"
           })
           .then(({ error }) => {
-            if (error) console.error("[tailor] Failed to save evaluation:", error.message);
+            if (error) void error;
           });
       }
     }
 
     const processingMs = Date.now() - start;
-    console.log(`[tailor] AI tailoring completed in ${processingMs}ms`);
 
     return NextResponse.json({
       ...aiResult,
@@ -241,7 +232,7 @@ export async function POST(request: Request) {
       processingMs
     });
   } catch (err) {
-    console.error("[tailor] Unexpected error:", err);
+    void err;
     return NextResponse.json(
       { error: "An unexpected error occurred. Please try again.", retryable: true },
       { status: 500 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -19,12 +19,16 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  FileUp,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useEvaluationStore } from "@/store/evaluation-store";
+import { useProfileStore } from "@/store/profile-store";
+import type { ProfileData } from "@/app/api/profile/route";
 
 const SETTINGS_STORAGE_KEY = "ats-precision-settings";
 
@@ -194,10 +198,75 @@ function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
   );
 }
 
+function ImportSaveNoticeModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            key="profile-import-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            key="profile-import-modal"
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.96 }}
+            transition={{ duration: 0.2 }}
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 bg-background p-6 shadow-2xl sm:p-8"
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 p-1.5 text-muted-foreground transition-colors hover:bg-surface-low hover:text-foreground"
+              aria-label="Close import notice"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <p className="label-sm text-muted-foreground">PROFILE IMPORTED</p>
+            <h2 className="mt-4 font-display text-2xl font-semibold text-foreground sm:text-3xl">
+              Save your profile to keep the imported resume data
+            </h2>
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
+              Your resume details were added to the profile form locally. Review
+              and edit anything you want, then use Save Profile to persist the
+              imported data to your account.
+            </p>
+            <div className="mt-6 flex justify-end">
+              <Button type="button" onClick={onClose}>
+                Review Profile
+              </Button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /* ─── Main page ────────────────────────────────────────────────────────── */
 
 export default function ProfilePage() {
   const localHistory = useEvaluationStore((state) => state.history);
+  const setProfileDraft = useProfileStore((state) => state.setDraft);
+  /** Prevents the sync effect from writing empty initial state to the store. */
+  const hasLoadedRef = useRef(false);
+  /** Skips the first sync pass after hydration to avoid writing untouched form defaults. */
+  const hasSkippedInitialSyncRef = useRef(false);
+  /** Snapshot of the store draft captured once; read by loadProfile on mount without subscribing to store updates. */
+  const initialDraftRef = useRef(useProfileStore.getState().draft);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   /* ── Contact ── */
   const [name, setName] = useState("");
@@ -237,6 +306,20 @@ export default function ProfilePage() {
     "idle",
   );
   const [openSections, setOpenSections] = useState<Set<string>>(new Set());
+  const [isImportingResume, setIsImportingResume] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importedResumeName, setImportedResumeName] = useState<string | null>(
+    null,
+  );
+  const [showImportSaveNotice, setShowImportSaveNotice] = useState(false);
+
+  const mapImportError = (message?: string) => {
+    if (message === "FREE_LIMIT_REACHED") {
+      return "You have reached the free resume import limit. Sign in to continue importing resumes.";
+    }
+
+    return message ?? "AI parsing failed. Please try again.";
+  };
 
   const getLocalSettingsSnapshot = () => {
     if (typeof window === "undefined") return null;
@@ -307,6 +390,129 @@ export default function ProfilePage() {
       .map((a) => a.trim())
       .filter(Boolean),
   });
+  const applyImportedProfile = useCallback((draft: ProfileData) => {
+    const experience = draft.experience ?? [];
+    const skills = draft.skills ?? [];
+    const projects = draft.projects ?? [];
+    const education = draft.education ?? [];
+    const certifications = draft.certifications ?? [];
+    const awards = draft.awards ?? [];
+
+    setName(draft.name ?? "");
+    setEmail(draft.email ?? "");
+    setPhone(draft.phone ?? "");
+    setContactLocation(draft.location ?? "");
+    setLinkedin(draft.linkedin ?? "");
+    setGithub(draft.github ?? "");
+    setSummary(draft.summary ?? "");
+
+    setExperiences(
+      experience.map((entry) => ({
+        id: uid(),
+        company: entry.company,
+        title: entry.title,
+        dates: entry.dates,
+        location: entry.location,
+        bullets: entry.bullets.join("\n"),
+      })),
+    );
+
+    setSkills(
+      skills.map((entry) => ({
+        id: uid(),
+        category: entry.category,
+        items: entry.items.join(", "),
+      })),
+    );
+
+    setProjects(
+      projects.map((entry) => ({
+        id: uid(),
+        name: entry.name,
+        tech: entry.tech,
+        link: entry.link,
+        website: entry.website,
+        bullets: entry.bullets.join("\n"),
+      })),
+    );
+
+    setEducation(
+      education.map((entry) => ({
+        id: uid(),
+        institution: entry.institution,
+        degree: entry.degree,
+        year: entry.year,
+        gpa: entry.gpa,
+      })),
+    );
+
+    setCertifications(certifications.join("\n"));
+    setAwards(awards.join("\n"));
+
+    setOpenSections(
+      new Set(
+        [
+          "contact",
+          draft.summary && "summary",
+          experience.length && "experience",
+          skills.length && "skills",
+          projects.length && "projects",
+          education.length && "education",
+          certifications.length && "certifications",
+          awards.length && "awards",
+        ].filter(Boolean) as string[],
+      ),
+    );
+  }, []);
+
+  const handleImportResume = useCallback(
+    async (file: File | null) => {
+      if (!file) return;
+
+      const lowerName = file.name.toLowerCase();
+      if (!(lowerName.endsWith(".pdf") || lowerName.endsWith(".docx"))) {
+        setImportError("Please upload a PDF or DOCX resume.");
+        if (importInputRef.current) importInputRef.current.value = "";
+        return;
+      }
+
+      setIsImportingResume(true);
+      setImportError(null);
+
+      try {
+        const formData = new FormData();
+        formData.append("resume", file);
+
+        const res = await fetch("/api/profile/parse-resume", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = (await res.json()) as {
+          profile?: ProfileData;
+          error?: string;
+        };
+
+        if (!res.ok || !data.profile) {
+          throw new Error(mapImportError(data.error));
+        }
+
+        applyImportedProfile(data.profile);
+        setImportedResumeName(file.name);
+        setShowImportSaveNotice(true);
+      } catch (error) {
+        setImportError(
+          error instanceof Error
+            ? error.message
+            : "Failed to parse the uploaded resume.",
+        );
+      } finally {
+        setIsImportingResume(false);
+        if (importInputRef.current) importInputRef.current.value = "";
+      }
+    },
+    [applyImportedProfile],
+  );
 
   async function handleExport() {
     setExporting(true);
@@ -379,7 +585,7 @@ export default function ProfilePage() {
       setExportStatus("done");
       setTimeout(() => setExportStatus("idle"), 3000);
     } catch (err) {
-      console.error("Failed to export data:", err);
+      void err;
       setExportStatus("error");
       setTimeout(() => setExportStatus("idle"), 4000);
     } finally {
@@ -389,12 +595,57 @@ export default function ProfilePage() {
 
   /* ── Load profile on mount ── */
   const loadProfile = useCallback(async () => {
+    const restoreFromStoreDraft = () => {
+      const storeDraft = initialDraftRef.current;
+      if (!storeDraft) return false;
+
+      setName(storeDraft.name);
+      setEmail(storeDraft.email);
+      setPhone(storeDraft.phone);
+      setContactLocation(storeDraft.location);
+      setLinkedin(storeDraft.linkedin);
+      setGithub(storeDraft.github);
+      setSummary(storeDraft.summary);
+      if (storeDraft.experiences.length)
+        setExperiences(
+          storeDraft.experiences.map((e) => ({ ...e, id: uid() })),
+        );
+      if (storeDraft.skills.length)
+        setSkills(storeDraft.skills.map((s) => ({ ...s, id: uid() })));
+      if (storeDraft.projects.length)
+        setProjects(storeDraft.projects.map((p) => ({ ...p, id: uid() })));
+      if (storeDraft.education.length)
+        setEducation(storeDraft.education.map((e) => ({ ...e, id: uid() })));
+      if (storeDraft.certifications)
+        setCertifications(storeDraft.certifications);
+      if (storeDraft.awards) setAwards(storeDraft.awards);
+
+      // Open sections that have restored data so the user sees them immediately.
+      setOpenSections(() => {
+        const s = new Set<string>(["contact"]);
+        if (storeDraft.summary) s.add("summary");
+        if (storeDraft.experiences.length) s.add("experience");
+        if (storeDraft.skills.length) s.add("skills");
+        if (storeDraft.projects.length) s.add("projects");
+        if (storeDraft.education.length) s.add("education");
+        if (storeDraft.certifications) s.add("certifications");
+        if (storeDraft.awards) s.add("awards");
+        return s;
+      });
+
+      return true;
+    };
+
     try {
       const res = await fetch("/api/profile");
-      if (!res.ok) return;
+      if (!res.ok) {
+        restoreFromStoreDraft();
+        return;
+      }
+
       const { profile } = await res.json();
       if (!profile) {
-        setLoading(false);
+        restoreFromStoreDraft();
         return;
       }
 
@@ -493,8 +744,10 @@ export default function ProfilePage() {
         setAwards(profile.awards.join("\n"));
       }
     } catch (err) {
-      console.error("Failed to load profile:", err);
+      void err;
+      restoreFromStoreDraft();
     } finally {
+      hasLoadedRef.current = true;
       setLoading(false);
     }
   }, []);
@@ -502,6 +755,66 @@ export default function ProfilePage() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  /* ── Sync form state → session store ── */
+  /* Runs after every change so unsaved data survives navigation within the session. */
+  useEffect(() => {
+    if (!hasLoadedRef.current) return;
+    if (!hasSkippedInitialSyncRef.current) {
+      hasSkippedInitialSyncRef.current = true;
+      return;
+    }
+
+    setProfileDraft({
+      name,
+      email,
+      phone,
+      location: contactLocation,
+      linkedin,
+      github,
+      summary,
+      experiences: experiences.map(
+        ({ company, title, dates, location, bullets }) => ({
+          company,
+          title,
+          dates,
+          location,
+          bullets,
+        }),
+      ),
+      skills: skills.map(({ category, items }) => ({ category, items })),
+      projects: projects.map(({ name: n, tech, link, website, bullets }) => ({
+        name: n,
+        tech,
+        link,
+        website,
+        bullets,
+      })),
+      education: education.map(({ institution, degree, year, gpa }) => ({
+        institution,
+        degree,
+        year,
+        gpa,
+      })),
+      certifications,
+      awards,
+    });
+  }, [
+    name,
+    email,
+    phone,
+    contactLocation,
+    linkedin,
+    github,
+    summary,
+    experiences,
+    skills,
+    projects,
+    education,
+    certifications,
+    awards,
+    setProfileDraft,
+  ]);
 
   /* ── Section toggling ── */
   const toggleSection = (id: string) => {
@@ -663,6 +976,63 @@ export default function ProfilePage() {
               </span>
             )}
           </Button>
+        </div>
+
+        <div className="mt-4 bg-surface-low p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="label-sm text-muted-foreground">RESUME IMPORT</p>
+              <h2 className="mt-2 font-display text-xl font-semibold text-foreground">
+                Import profile details from your current resume
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                Upload a PDF or DOCX resume. Our AI will read every section and
+                automatically fill all profile fields — contact info, summary,
+                experience, skills, projects, education, and more. Review the
+                imported data, then save your profile to persist it.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3 sm:items-end">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="hidden"
+                onChange={(event) =>
+                  void handleImportResume(event.target.files?.[0] ?? null)
+                }
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => importInputRef.current?.click()}
+                disabled={isImportingResume}
+                className="min-w-56"
+              >
+                {isImportingResume ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Analysing with AI…
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <FileUp className="h-4 w-4" />
+                    Upload Resume to Import
+                  </span>
+                )}
+              </Button>
+              {importedResumeName && !importError && (
+                <p className="text-xs text-muted-foreground">
+                  Imported from {importedResumeName}
+                </p>
+              )}
+            </div>
+          </div>
+          {importError && (
+            <p className="mt-3 text-sm font-medium text-destructive">
+              {importError}
+            </p>
+          )}
         </div>
 
         <div className="mt-10 space-y-4">
@@ -1205,6 +1575,10 @@ export default function ProfilePage() {
           </div>
         </div>
       </motion.div>
+      <ImportSaveNoticeModal
+        isOpen={showImportSaveNotice}
+        onClose={() => setShowImportSaveNotice(false)}
+      />
     </div>
   );
 }

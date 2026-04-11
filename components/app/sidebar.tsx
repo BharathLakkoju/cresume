@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { clearEvaluationSessionData } from "@/store/evaluation-store";
+import { clearProfileSessionData } from "@/store/profile-store";
 
 const navItems: Array<{
   label: string;
@@ -37,6 +38,7 @@ export function Sidebar() {
 
   const clearLocalUserData = () => {
     clearEvaluationSessionData();
+    clearProfileSessionData();
 
     if (typeof window === "undefined") return;
 

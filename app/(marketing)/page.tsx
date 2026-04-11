@@ -5,6 +5,7 @@ import { FeaturesSection } from "@/components/site/features-section";
 import { HeroSection } from "@/components/site/hero-section";
 import { HowItWorksSection } from "@/components/site/how-it-works-section";
 import { PricingSection } from "@/components/site/pricing-section";
+import { RoleGuidesSection } from "@/components/site/role-guides-section";
 import { TestimonialsSection } from "@/components/site/testimonials-section";
 import { absoluteUrl, createMetadata, siteConfig } from "@/lib/seo";
 
@@ -87,6 +88,10 @@ export default function HomePage() {
       <HeroSection />
       <FeaturesSection />
       <HowItWorksSection />
+      <RoleGuidesSection
+        title="Find an ATS resume checker guide for your target role"
+        description="Use role-specific landing pages to understand the exact signals hiring teams expect in software engineering, product, analytics, and customer success resumes."
+      />
       <PricingSection />
       <TestimonialsSection />
       <FaqSection />
