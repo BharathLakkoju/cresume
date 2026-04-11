@@ -1,3 +1,4 @@
+import type { Route } from "next";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -168,9 +169,11 @@ export default async function RoleLandingPage({
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
-              href={getRoleCompanionArticlePath(
+              href={
+                getRoleCompanionArticlePath(
                   page.companionArticle.slug,
-                )}
+                ) as Route<string>
+              }
               className="inline-flex items-center justify-center rounded-full border border-[hsl(var(--border)/0.12)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-base"
             >
               Read companion article
@@ -196,7 +199,7 @@ export default async function RoleLandingPage({
               Check ATS score
             </Link>
             <Link
-              href={roleGuidesHubPath}
+              href={roleGuidesHubPath as Route<string>}
               className="inline-flex items-center justify-center rounded-full border border-[hsl(var(--border)/0.12)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-lowest"
             >
               Browse more role guides
@@ -229,7 +232,7 @@ export default async function RoleLandingPage({
             {relatedPages.map((relatedPage) => (
               <Link
                 key={relatedPage.slug}
-                href={relatedPage.path}
+                href={relatedPage.path as Route<string>}
                 className="rounded-3xl border border-[hsl(var(--border)/0.12)] bg-surface-lowest p-6 transition-transform duration-200 hover:-translate-y-1"
               >
                 <p className="label-sm text-muted-foreground">
