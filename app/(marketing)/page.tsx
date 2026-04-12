@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CtaSection } from "@/components/site/cta-section";
-import { faqs, FaqSection } from "@/components/site/faq-section";
+import { FaqSection } from "@/components/site/faq-section";
 import { FeaturesSection } from "@/components/site/features-section";
 import { HeroSection } from "@/components/site/hero-section";
 import { HowItWorksSection } from "@/components/site/how-it-works-section";
@@ -8,6 +8,7 @@ import { PricingSection } from "@/components/site/pricing-section";
 import { RoleGuidesSection } from "@/components/site/role-guides-section";
 import { TestimonialsSection } from "@/components/site/testimonials-section";
 import { absoluteUrl, createMetadata, siteConfig } from "@/lib/seo";
+import { faqs } from "@/lib/faq-data";
 
 export const metadata: Metadata = createMetadata({
   title: "AI ATS Resume Checker, Resume Scanner and Resume Optimization Tool",
