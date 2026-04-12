@@ -55,7 +55,7 @@ export function HeroSection() {
         {/* Badge */}
         <FadeIn delay={0}>
           <span className="label-sm inline-flex items-center gap-2 bg-surface-low px-4 py-2 text-muted-foreground">
-            <span className="h-1.5 w-1.5 rounded-full bg-foreground" />
+            <span className="h-1.5 w-1.5 bg-foreground" />
             NEXT-GEN RESUME ANALYSIS
           </span>
         </FadeIn>
@@ -83,8 +83,8 @@ export function HeroSection() {
             <Button size="xl" asChild>
               <Link href="/auth">Check ATS Score</Link>
             </Button>
-            <Button variant="secondary" size="lg">
-              View Sample Report
+            <Button variant="secondary" size="lg" asChild>
+              <Link href="/blog/sample-report">View Sample Report</Link>
             </Button>
           </div>
         </FadeIn>
@@ -153,7 +153,11 @@ export function HeroSection() {
             <motion.div
               className="h-7 w-px bg-muted-foreground/40"
               animate={{ scaleY: [0.4, 1, 0.4], opacity: [0.3, 1, 0.3] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+              transition={{
+                duration: 2.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
             />
             <span className="label-sm text-muted-foreground/60">SCROLL</span>
           </div>

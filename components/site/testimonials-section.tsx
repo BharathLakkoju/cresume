@@ -1,12 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 import { FadeIn } from "@/components/site/fade-in";
 import { springs } from "@/lib/animation-variants";

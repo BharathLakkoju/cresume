@@ -3,12 +3,7 @@
 import { useRef } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/site/fade-in";

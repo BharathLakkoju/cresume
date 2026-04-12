@@ -35,7 +35,7 @@
   --border: 35 8% 77%;              /* #c8c4bc — warm outline-variant */
   --input: 40 12% 87%;
   --ring: 0 0% 0%;
-  --radius: 0.5rem;
+  --radius: 0rem;
 }
 
 * {

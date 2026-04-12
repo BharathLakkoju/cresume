@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { AuthForm } from "@/components/site/auth-form";
 import { createMetadata } from "@/lib/seo";
 
@@ -33,12 +34,12 @@ export default function AuthPage() {
         <div className="mt-8 text-center text-sm text-muted-foreground">
           2 free evaluations available without an account.{" "}
           <div>
-            <a
+            <Link
               href="/app/upload"
               className="underline underline-offset-4 hover:text-foreground"
             >
               Try without signing in →
-            </a>
+            </Link>
           </div>
         </div>
       </div>
