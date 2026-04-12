@@ -63,7 +63,6 @@ const tiers = [
 
 export function PricingSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -98,20 +97,20 @@ export function PricingSection() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.15 }}
-            className="mt-16 grid gap-6 md:grid-cols-2 lg:max-w-3xl"
+            className="mt-16 grid md:grid-cols-2"
           >
             {tiers.map((tier) => (
               <motion.div key={tier.name} variants={scaleUp} className="h-full">
                 {/* Hover lift — subtle on featured, gentle on default */}
                 <motion.div
-                  whileHover={
-                    !prefersReducedMotion ? { y: tier.featured ? -3 : -5 } : {}
-                  }
+                  whileHover={{
+                    y: tier.featured ? -3 : -5,
+                  }}
                   transition={springs.gentle}
                   className="h-full"
                 >
                   <div
-                    className={`relative flex h-full flex-col rounded-2xl border p-8 ${
+                    className={`relative flex h-full flex-col border p-8 ${
                       tier.featured
                         ? "border-foreground/20 bg-foreground text-background"
                         : "border-[hsl(var(--border)/0.15)] bg-card"
@@ -119,7 +118,7 @@ export function PricingSection() {
                   >
                     {tier.featured && (
                       <div className="absolute -top-3 left-8">
-                        <span className="rounded-full border border-foreground/20 bg-background px-3 py-1 text-xs font-semibold text-foreground">
+                        <span className="border border-foreground/20 bg-background px-3 py-1 text-xs font-semibold text-foreground">
                           Most Popular
                         </span>
                       </div>

@@ -37,7 +37,6 @@ export function HowItWorksSection() {
 
   // Upload card floats upward as you scroll through the section
   const cardY = useTransform(scrollYProgress, [0, 1], [80, -60]);
-  const cardRotate = useTransform(scrollYProgress, [0, 1], [-1.5, 1.5]);
 
   // Step numbers drift at a slower rate (parallax depth layer)
   const stepsY = useTransform(scrollYProgress, [0, 1], [20, -20]);
@@ -74,7 +73,7 @@ export function HowItWorksSection() {
                 transition={{ ...springs.smooth, delay: index * 0.12 + 0.05 }}
                 className="flex gap-5"
               >
-                <span className="font-display text-5xl font-normal leading-none text-surface-highest">
+                <span className="font-display text-4xl font-bold text-surface-highest">
                   {step.number}
                 </span>
                 <div>
@@ -92,7 +91,7 @@ export function HowItWorksSection() {
           {/* Right — Upload card with pronounced parallax + hover lift */}
           <FadeIn delay={0.2}>
             <motion.div
-              style={{ y: cardY, rotate: cardRotate }}
+              style={{ y: cardY }}
               whileHover={{ scale: 1.02 }}
               transition={springs.gentle}
               className="will-change-transform bg-surface-lowest p-8 shadow-panel"

@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { Brain, FileSearch, Target } from "lucide-react";
 import {
   motion,
-  useReducedMotion,
   useScroll,
   useTransform,
 } from "framer-motion";
@@ -35,7 +34,6 @@ const pillars = [
 
 export function FeaturesSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -85,7 +83,7 @@ export function FeaturesSection() {
                   {/* Hover interaction layer — propagates state to icon child */}
                   <motion.div
                     initial="rest"
-                    whileHover={prefersReducedMotion ? "rest" : "hover"}
+                    whileHover="hover"
                     animate="rest"
                     variants={cardVariants}
                     className="group h-full"

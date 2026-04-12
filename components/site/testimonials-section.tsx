@@ -30,7 +30,6 @@ const testimonials = [
 
 export function TestimonialsSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -56,7 +55,7 @@ export function TestimonialsSection() {
           <FadeIn delay={0} direction="left">
             <motion.div style={{ y: leftY }} className="will-change-transform">
               <motion.div
-                whileHover={!prefersReducedMotion ? { y: -3, scale: 1.01 } : {}}
+                whileHover={{ y: -3, scale: 1.01 }}
                 transition={springs.gentle}
                 className="h-full"
               >
@@ -85,7 +84,7 @@ export function TestimonialsSection() {
           <FadeIn delay={0.12} direction="right">
             <motion.div style={{ y: rightY }} className="will-change-transform">
               <motion.div
-                whileHover={!prefersReducedMotion ? { y: -3, scale: 1.01 } : {}}
+                whileHover={{ y: -3, scale: 1.01 }}
                 transition={springs.gentle}
                 className="h-full"
               >
