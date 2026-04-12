@@ -1,12 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { FileUp } from "lucide-react";
 
 import { FadeIn } from "@/components/site/fade-in";
@@ -35,7 +30,6 @@ const steps = [
 
 export function HowItWorksSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -74,17 +68,13 @@ export function HowItWorksSection() {
             {steps.map((step, index) => (
               <motion.div
                 key={step.number}
-                initial={
-                  prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -20 }
-                }
-                whileInView={
-                  prefersReducedMotion ? { opacity: 1 } : { opacity: 1, x: 0 }
-                }
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ ...springs.smooth, delay: index * 0.12 + 0.05 }}
                 className="flex gap-5"
               >
-                <span className="font-display text-4xl font-bold text-surface-highest">
+                <span className="font-display text-5xl font-normal leading-none text-surface-highest">
                   {step.number}
                 </span>
                 <div>
@@ -103,7 +93,7 @@ export function HowItWorksSection() {
           <FadeIn delay={0.2}>
             <motion.div
               style={{ y: cardY, rotate: cardRotate }}
-              whileHover={!prefersReducedMotion ? { scale: 1.02 } : {}}
+              whileHover={{ scale: 1.02 }}
               transition={springs.gentle}
               className="will-change-transform bg-surface-lowest p-8 shadow-panel"
             >

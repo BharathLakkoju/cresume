@@ -47,10 +47,10 @@ const config = {
           foreground: "hsl(var(--card-foreground))"
         },
         surface: {
-          base: "#f9f9f9",
-          low: "#f3f3f3",
+          base: "#f9f8f5",
+          low: "#f0eeea",
           lowest: "#ffffff",
-          highest: "#e2e2e2"
+          highest: "#e4e2dc"
         }
       },
       fontFamily: {
@@ -110,8 +110,8 @@ const config = {
         "fade-up": "fade-up 0.8s ease-out forwards"
       },
       boxShadow: {
-        panel: "0 24px 60px rgba(0, 0, 0, 0.08)",
-        ambient: "0 40px 80px rgba(26, 28, 28, 0.04)"
+        panel: "0 2px 40px rgba(21, 19, 17, 0.07), 0 1px 10px rgba(21, 19, 17, 0.05)",
+        ambient: "0 40px 80px rgba(21, 19, 17, 0.04)"
       }
     }
   },
