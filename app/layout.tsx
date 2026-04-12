@@ -4,6 +4,7 @@ import { Inter, Lora } from "next/font/google";
 import "./globals.css";
 import { LoadingProvider } from "@/components/providers/loading-provider";
 import { MotionProvider } from "@/components/providers/motion-provider";
+import { LenisProvider } from "@/components/providers/lenis-provider";
 import { getSiteUrl, siteConfig } from "@/lib/seo";
 
 const bodyFont = Inter({
@@ -73,14 +74,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bodyFont.variable} ${displayFont.variable}`}
-      suppressHydrationWarning
+      className={`${bodyFont.variable} ${displayFont.variable} relative`}
       data-scroll-behavior="smooth"
     >
       <body>
-        <MotionProvider>
-          <LoadingProvider>{children}</LoadingProvider>
-        </MotionProvider>
+        <LenisProvider>
+          <MotionProvider>
+            <LoadingProvider>{children}</LoadingProvider>
+          </MotionProvider>
+        </LenisProvider>
       </body>
     </html>
   );

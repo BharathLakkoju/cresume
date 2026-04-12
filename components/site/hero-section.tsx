@@ -30,8 +30,7 @@ export function HeroSection() {
   const blob3Y = useTransform(scrollY, [0, 800], [0, 110]);
 
   const cardY = useTransform(scrollY, [0, 800], [0, -90]);
-  const cardRotate = useTransform(scrollY, [0, 800], [0, 5]);
-  const cardScale = useTransform(scrollY, [0, 800], [1, 0.95]);
+  const cardScale = useTransform(scrollY, [0, 800], [1.4, 1]);
 
   return (
     <section
@@ -93,8 +92,8 @@ export function HeroSection() {
         {/* Chart Preview Card */}
         <FadeIn delay={0.3}>
           <motion.div
-            style={{ y: cardY, rotate: cardRotate, scale: cardScale }}
-            className="mx-auto mt-16 max-w-lg will-change-transform"
+            style={{ y: cardY, scale: cardScale }}
+            className="mx-auto mt-24 max-w-lg will-change-transform"
           >
             <div className="bg-surface-lowest p-1 shadow-panel">
               <div className="bg-surface-low p-6">
