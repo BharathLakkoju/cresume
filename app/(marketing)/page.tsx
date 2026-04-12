@@ -67,7 +67,7 @@ const softwareSchema = {
 
 export default function HomePage() {
   return (
-    <main>
+    <main className="relative">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

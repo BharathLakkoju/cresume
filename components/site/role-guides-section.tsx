@@ -2,15 +2,10 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 
 import { roleLandingPages } from "@/lib/role-pages";
-import {
-  fadeUp,
-  fadeUpReduced,
-  springs,
-  staggerContainer,
-} from "@/lib/animation-variants";
+import { fadeUp, springs, staggerContainer } from "@/lib/animation-variants";
 
 type RoleGuidesSectionProps = {
   title: string;
@@ -25,8 +20,6 @@ export function RoleGuidesSection({
   limit,
   className,
 }: RoleGuidesSectionProps) {
-  const prefersReducedMotion = useReducedMotion();
-  const itemVariants = prefersReducedMotion ? fadeUpReduced : fadeUp;
   const pages = limit ? roleLandingPages.slice(0, limit) : roleLandingPages;
 
   return (
@@ -51,8 +44,8 @@ export function RoleGuidesSection({
           {pages.map((page) => (
             <motion.div
               key={page.slug}
-              variants={itemVariants}
-              whileHover={!prefersReducedMotion ? { y: -4, scale: 1.01 } : {}}
+              variants={fadeUp}
+              whileHover={{ y: -4, scale: 1.01 }}
               transition={springs.gentle}
             >
               <Link

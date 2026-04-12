@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Lora } from "next/font/google";
 
 import "./globals.css";
 import { LoadingProvider } from "@/components/providers/loading-provider";
+import { MotionProvider } from "@/components/providers/motion-provider";
 import { getSiteUrl, siteConfig } from "@/lib/seo";
 
 const bodyFont = Inter({
@@ -10,9 +11,11 @@ const bodyFont = Inter({
   variable: "--font-body",
 });
 
-const displayFont = Space_Grotesk({
+const displayFont = Lora({
   subsets: ["latin"],
   variable: "--font-display",
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -75,7 +78,9 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
     >
       <body>
-        <LoadingProvider>{children}</LoadingProvider>
+        <MotionProvider>
+          <LoadingProvider>{children}</LoadingProvider>
+        </MotionProvider>
       </body>
     </html>
   );
