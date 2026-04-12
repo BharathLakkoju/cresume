@@ -25,8 +25,8 @@ export default function ContactPage() {
 
         <div className="mt-12 space-y-8">
           {/* Email card */}
-          <div className="flex items-start gap-5 rounded-2xl border border-[hsl(var(--border)/0.15)] bg-card p-6">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+          <div className="flex items-start gap-5 border border-[hsl(var(--border)/0.2)] bg-card p-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-muted">
               <Mail className="h-5 w-5 text-foreground" />
             </div>
             <div>
@@ -44,7 +44,7 @@ export default function ContactPage() {
           </div>
 
           {/* Response time */}
-          <div className="rounded-2xl border border-[hsl(var(--border)/0.15)] bg-muted/40 p-6">
+          <div className="border border-[hsl(var(--border)/0.2)] bg-muted/40 p-6">
             <p className="text-sm leading-relaxed text-muted-foreground">
               <strong className="text-foreground">
                 Typical response time:

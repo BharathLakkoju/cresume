@@ -12,9 +12,9 @@ import {
 import { absoluteUrl, createMetadata } from "@/lib/seo";
 
 type RoleLandingPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export function generateStaticParams() {
@@ -24,7 +24,7 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: RoleLandingPageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   const page = getRoleLandingPage(slug);
 
   if (!page) {
@@ -48,7 +48,7 @@ export async function generateMetadata({
 export default async function RoleLandingPage({
   params,
 }: RoleLandingPageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const page = getRoleLandingPage(slug);
 
   if (!page) {
@@ -114,7 +114,7 @@ export default async function RoleLandingPage({
         </p>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-3xl bg-surface-lowest p-8 shadow-ambient">
+          <section className="border border-[hsl(var(--border)/0.2)] bg-surface-lowest p-8">
             <p className="label-sm text-muted-foreground">What to optimize</p>
             <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
               Signals ATS screening looks for in this role
@@ -125,7 +125,7 @@ export default async function RoleLandingPage({
               ))}
             </ul>
           </section>
-          <section className="rounded-3xl bg-surface-lowest p-8 shadow-ambient">
+          <section className="border border-[hsl(var(--border)/0.2)] bg-surface-lowest p-8">
             <p className="label-sm text-muted-foreground">Rewrite priorities</p>
             <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
               What candidates should change first
@@ -138,7 +138,7 @@ export default async function RoleLandingPage({
           </section>
         </div>
 
-        <section className="mt-12 rounded-3xl border border-[hsl(var(--border)/0.12)] p-8 lg:p-10">
+        <section className="mt-12 border border-[hsl(var(--border)/0.2)] p-8 lg:p-10">
           <p className="label-sm text-muted-foreground">Role focus</p>
           <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
             Why {page.audience.toLowerCase()} need role-specific resume scanning
@@ -159,7 +159,7 @@ export default async function RoleLandingPage({
           </p>
         </section>
 
-        <section className="mt-12 rounded-3xl bg-surface-lowest p-8 shadow-ambient lg:p-10">
+        <section className="mt-12 border border-[hsl(var(--border)/0.2)] bg-surface-lowest p-8 lg:p-10">
           <p className="label-sm text-muted-foreground">Companion article</p>
           <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
             Go deeper with resume examples, keyword lists, and interview prep
@@ -174,14 +174,14 @@ export default async function RoleLandingPage({
                   page.companionArticle.slug,
                 ) as Route<string>
               }
-              className="inline-flex items-center justify-center rounded-full border border-[hsl(var(--border)/0.12)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-base"
+              className="inline-flex items-center justify-center border border-[hsl(var(--border)/0.2)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-base"
             >
               Read companion article
             </Link>
           </div>
         </section>
 
-        <section className="mt-12 rounded-3xl bg-[linear-gradient(135deg,hsl(var(--surface-base)),hsl(var(--surface-lowest)))] p-8 lg:p-10">
+        <section className="mt-12 border border-[hsl(var(--border)/0.2)] bg-surface-low p-8 lg:p-10">
           <p className="label-sm text-muted-foreground">Use the product</p>
           <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
             Check your resume against a live job description
@@ -194,13 +194,13 @@ export default async function RoleLandingPage({
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
               href="/auth"
-              className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
               Check ATS score
             </Link>
             <Link
               href={roleGuidesHubPath as Route<string>}
-              className="inline-flex items-center justify-center rounded-full border border-[hsl(var(--border)/0.12)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-lowest"
+              className="inline-flex items-center justify-center border border-[hsl(var(--border)/0.2)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-lowest"
             >
               Browse more role guides
             </Link>
@@ -213,7 +213,7 @@ export default async function RoleLandingPage({
             {page.faq.map((entry) => (
               <section
                 key={entry.question}
-                className="rounded-3xl bg-surface-lowest p-8 shadow-ambient"
+                className="border-b border-[hsl(var(--border)/0.2)] bg-surface-lowest p-8"
               >
                 <h2 className="font-display text-2xl font-semibold text-foreground">
                   {entry.question}
@@ -233,7 +233,7 @@ export default async function RoleLandingPage({
               <Link
                 key={relatedPage.slug}
                 href={relatedPage.path as Route<string>}
-                className="rounded-3xl border border-[hsl(var(--border)/0.12)] bg-surface-lowest p-6 transition-transform duration-200 hover:-translate-y-1"
+                className="border border-[hsl(var(--border)/0.2)] bg-surface-lowest p-6 transition-colors hover:bg-surface-low"
               >
                 <p className="label-sm text-muted-foreground">
                   {relatedPage.eyebrow}
