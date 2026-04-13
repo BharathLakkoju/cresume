@@ -5,6 +5,7 @@ import { Brain, FileSearch, Target } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
 import { FadeIn } from "@/components/site/fade-in";
+import { cardVariants, iconVariants } from "@/lib/animation-variants";
 
 const pillars = [
   {
@@ -70,21 +71,34 @@ export function FeaturesSection() {
             const Icon = pillar.icon;
             return (
               <FadeIn key={pillar.title} delay={index * 0.1}>
+                {/* Parallax layer — moves at different speeds per card */}
                 <motion.div
                   style={{ y: cardYValues[index] }}
-                  className="will-change-transform"
+                  className="will-change-transform h-full"
                 >
-                  <div className="group h-full bg-surface-lowest p-8 shadow-ambient transition-shadow duration-300 hover:shadow-panel">
-                    <div className="flex h-12 w-12 items-center justify-center bg-foreground text-primary-foreground">
-                      <Icon className="h-5 w-5" />
+                  {/* Hover interaction layer — propagates state to icon child */}
+                  <motion.div
+                    initial="rest"
+                    whileHover="hover"
+                    animate="rest"
+                    variants={cardVariants}
+                    className="group h-full"
+                  >
+                    <div className="h-full bg-surface-lowest p-8 shadow-ambient transition-shadow duration-500 group-hover:shadow-panel">
+                      <motion.div
+                        variants={iconVariants}
+                        className="flex h-12 w-12 items-center justify-center bg-foreground text-primary-foreground"
+                      >
+                        <Icon className="h-5 w-5" />
+                      </motion.div>
+                      <h3 className="mt-6 font-display text-xl font-semibold text-foreground">
+                        {pillar.title}
+                      </h3>
+                      <p className="mt-3 leading-7 text-muted-foreground">
+                        {pillar.description}
+                      </p>
                     </div>
-                    <h3 className="mt-6 font-display text-xl font-semibold text-foreground">
-                      {pillar.title}
-                    </h3>
-                    <p className="mt-3 leading-7 text-muted-foreground">
-                      {pillar.description}
-                    </p>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </FadeIn>
             );

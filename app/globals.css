@@ -9,33 +9,33 @@
 
 :root {
   /* Surface Hierarchy */
-  --background: 0 0% 97.6%;        /* #f9f9f9 — base canvas */
-  --foreground: 160 5% 11%;         /* #1a1c1c — on-surface */
+  --background: 48 24% 97%;         /* #f9f8f5 — warm base canvas */
+  --foreground: 30 10% 8%;          /* #151311 — on-surface */
 
   --card: 0 0% 100%;                /* #ffffff — interactive cards */
-  --card-foreground: 160 5% 11%;
+  --card-foreground: 30 10% 8%;
 
   --primary: 0 0% 0%;               /* #000000 — primary */
   --primary-foreground: 0 0% 100%;  /* #ffffff — on-primary */
   --primary-container: 0 0% 23%;    /* #3b3b3b — gradient endpoint */
   --primary-fixed: 0 0% 37%;        /* #5e5e5e — hover state */
 
-  --secondary: 0 0% 95.3%;          /* #f3f3f3 — surface-container-low */
-  --secondary-foreground: 160 5% 11%;
+  --secondary: 40 18% 93%;          /* #f0eeea — warm surface-container-low */
+  --secondary-foreground: 30 10% 8%;
 
-  --muted: 0 0% 88.6%;              /* #e2e2e2 — surface-container-highest */
-  --muted-foreground: 0 0% 28%;     /* #474747 — on-surface-variant */
+  --muted: 40 12% 87%;              /* #e4e2dc — warm surface-container-highest */
+  --muted-foreground: 35 4% 40%;    /* #6a6762 — warm on-surface-variant */
 
-  --accent: 0 0% 95.3%;             /* #f3f3f3 */
-  --accent-foreground: 160 5% 11%;
+  --accent: 40 18% 93%;             /* #f0eeea */
+  --accent-foreground: 30 10% 8%;
 
   --destructive: 0 63% 41%;         /* #ba1a1a */
   --destructive-foreground: 0 0% 98%;
 
-  --border: 0 0% 78%;               /* #c6c6c6 — outline-variant at 15% */
-  --input: 0 0% 88.6%;
+  --border: 35 8% 77%;              /* #c8c4bc — warm outline-variant */
+  --input: 40 12% 87%;
   --ring: 0 0% 0%;
-  --radius: 0.5rem;
+  --radius: 0rem;
 }
 
 * {
@@ -76,16 +76,16 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
 /* ─── Surface Layers ─── */
 .surface-base {
-  background-color: #f9f9f9;
+  background-color: #f9f8f5;
 }
 .surface-low {
-  background-color: #f3f3f3;
+  background-color: #f0eeea;
 }
 .surface-lowest {
   background-color: #ffffff;
 }
 .surface-highest {
-  background-color: #e2e2e2;
+  background-color: #e4e2dc;
 }
 
 /* ─── Glassmorphism ─── */
@@ -176,4 +176,13 @@ h1, h2, h3, h4, h5, h6, .font-display {
 .dark-section {
   background: #0a0a0a;
   color: #ffffff;
+}
+
+/* ─── Scrollbar ─── */
+#role-guides .overflow-x-auto::-webkit-scrollbar {
+  display: none;
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }

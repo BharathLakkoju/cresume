@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { FileUp } from "lucide-react";
 
 import { FadeIn } from "@/components/site/fade-in";
+import { springs } from "@/lib/animation-variants";
 
 const steps = [
   {
@@ -36,7 +37,6 @@ export function HowItWorksSection() {
 
   // Upload card floats upward as you scroll through the section
   const cardY = useTransform(scrollYProgress, [0, 1], [80, -60]);
-  const cardRotate = useTransform(scrollYProgress, [0, 1], [-1.5, 1.5]);
 
   // Step numbers drift at a slower rate (parallax depth layer)
   const stepsY = useTransform(scrollYProgress, [0, 1], [20, -20]);
@@ -59,34 +59,41 @@ export function HowItWorksSection() {
         </FadeIn>
 
         <div className="mt-16 grid items-start gap-12 lg:grid-cols-2">
-          {/* Left — Steps with subtle parallax drift */}
+          {/* Left — Steps slide in from left with stagger */}
           <motion.div
             style={{ y: stepsY }}
             className="space-y-10 will-change-transform"
           >
             {steps.map((step, index) => (
-              <FadeIn key={step.number} delay={index * 0.1}>
-                <div className="flex gap-5">
-                  <span className="font-display text-4xl font-bold text-surface-highest">
-                    {step.number}
-                  </span>
-                  <div>
-                    <h3 className="font-display text-lg font-semibold text-foreground">
-                      {step.title}
-                    </h3>
-                    <p className="mt-2 leading-7 text-muted-foreground">
-                      {step.detail}
-                    </p>
-                  </div>
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ ...springs.smooth, delay: index * 0.12 + 0.05 }}
+                className="flex gap-5"
+              >
+                <span className="font-display text-4xl font-bold text-surface-highest">
+                  {step.number}
+                </span>
+                <div>
+                  <h3 className="font-display text-lg font-semibold text-foreground">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 leading-7 text-muted-foreground">
+                    {step.detail}
+                  </p>
                 </div>
-              </FadeIn>
+              </motion.div>
             ))}
           </motion.div>
 
-          {/* Right — Upload card with pronounced parallax */}
+          {/* Right — Upload card with pronounced parallax + hover lift */}
           <FadeIn delay={0.2}>
             <motion.div
-              style={{ y: cardY, rotate: cardRotate }}
+              style={{ y: cardY }}
+              whileHover={{ scale: 1.02 }}
+              transition={springs.gentle}
               className="will-change-transform bg-surface-lowest p-8 shadow-panel"
             >
               <div className="flex flex-col items-center justify-center border-2 border-dashed border-surface-highest py-16">

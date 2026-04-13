@@ -11,6 +11,7 @@ import { roleGuidesHubPath } from "@/lib/route-paths";
 
 const navLinks = [
   { label: "Role Guides", href: roleGuidesHubPath, isRoute: true },
+  { label: "Blog", href: "/blog", isRoute: true },
   { label: "Features", href: "/#features" },
   { label: "How It Works", href: "/#workflow" },
   { label: "Pricing", href: "/#pricing" },

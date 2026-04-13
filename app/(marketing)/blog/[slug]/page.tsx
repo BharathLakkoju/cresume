@@ -11,9 +11,9 @@ import {
 import { absoluteUrl, createMetadata } from "@/lib/seo";
 
 type RoleBlogPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export function generateStaticParams() {
@@ -23,7 +23,7 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: RoleBlogPageProps): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   const page = getRoleLandingPageByArticleSlug(slug);
 
   if (!page) {
@@ -46,7 +46,7 @@ export async function generateMetadata({
 }
 
 export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
-  const { slug } = params;
+  const { slug } = await params;
   const page = getRoleLandingPageByArticleSlug(slug);
 
   if (!page) {
@@ -94,7 +94,7 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
           {page.companionArticle.intro}
         </p>
 
-        <section className="mt-12 rounded-3xl bg-surface-lowest p-8 shadow-ambient lg:p-10">
+        <section className="mt-12 border border-[hsl(var(--border)/0.2)] bg-surface-lowest p-8 lg:p-10">
           <p className="label-sm text-muted-foreground">Role guide</p>
           <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
             Pair this article with the role-specific landing page
@@ -107,13 +107,13 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
               href={page.path as Route<string>}
-              className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="inline-flex items-center justify-center bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
               Open role guide
             </Link>
             <Link
               href="/auth"
-              className="inline-flex items-center justify-center rounded-full border border-[hsl(var(--border)/0.12)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-base"
+              className="inline-flex items-center justify-center border border-[hsl(var(--border)/0.2)] px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-surface-base"
             >
               Check ATS score
             </Link>
@@ -124,7 +124,7 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
           {page.companionArticle.sections.map((section) => (
             <section
               key={section.title}
-              className="rounded-3xl bg-surface-lowest p-8 shadow-ambient lg:p-10"
+              className="border-b border-[hsl(var(--border)/0.2)] bg-surface-lowest p-8 lg:p-10"
             >
               <h2 className="font-display text-3xl font-semibold text-foreground">
                 {section.title}
@@ -137,7 +137,7 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
         </div>
 
         <section className="mt-12 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-3xl border border-[hsl(var(--border)/0.12)] p-8 lg:p-10">
+          <section className="border border-[hsl(var(--border)/0.2)] p-8 lg:p-10">
             <p className="label-sm text-muted-foreground">Keyword angles</p>
             <h2 className="mt-4 font-display text-3xl font-semibold text-foreground">
               Search terms this role usually needs to cover
@@ -148,7 +148,7 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
               ))}
             </ul>
           </section>
-          <section className="rounded-3xl border border-[hsl(var(--border)/0.12)] p-8 lg:p-10">
+          <section className="border border-[hsl(var(--border)/0.2)] p-8 lg:p-10">
             <p className="label-sm text-muted-foreground">
               Resume rewrite focus
             </p>
@@ -174,7 +174,7 @@ export default async function RoleBlogPage({ params }: RoleBlogPageProps) {
                     relatedPage.companionArticle.slug,
                   ) as Route<string>
                 }
-                className="rounded-3xl border border-[hsl(var(--border)/0.12)] bg-surface-lowest p-6 transition-transform duration-200 hover:-translate-y-1"
+                className="border border-[hsl(var(--border)/0.2)] bg-surface-lowest p-6 transition-colors hover:bg-surface-low"
               >
                 <p className="label-sm text-muted-foreground">
                   {relatedPage.eyebrow}

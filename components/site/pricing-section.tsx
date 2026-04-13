@@ -7,6 +7,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/site/fade-in";
+import { scaleUp, springs, staggerContainer } from "@/lib/animation-variants";
 
 const tiers = [
   {
@@ -83,108 +84,124 @@ export function PricingSection() {
           </p>
         </FadeIn>
 
-        <motion.div
-          style={{ y: contentY }}
-          className="mt-16 grid gap-6 md:grid-cols-2 lg:max-w-3xl"
-        >
-          {tiers.map((tier) => (
-            <FadeIn key={tier.name}>
-              <div
-                className={`relative flex h-full flex-col rounded-2xl border p-8 ${
-                  tier.featured
-                    ? "border-foreground/20 bg-foreground text-background"
-                    : "border-[hsl(var(--border)/0.15)] bg-card"
-                }`}
-              >
-                {tier.featured && (
-                  <div className="absolute -top-3 left-8">
-                    <span className="rounded-full border border-foreground/20 bg-background px-3 py-1 text-xs font-semibold text-foreground">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                <div>
-                  <p
-                    className={`label-sm ${tier.featured ? "text-background/60" : "text-muted-foreground"}`}
-                  >
-                    {tier.name.toUpperCase()}
-                  </p>
-                  <div className="mt-3 flex items-end gap-2">
-                    <span
-                      className={`font-display text-4xl font-bold ${tier.featured ? "text-background" : "text-foreground"}`}
-                    >
-                      {tier.price}
-                    </span>
-                    <span
-                      className={`mb-1 text-sm ${tier.featured ? "text-background/60" : "text-muted-foreground"}`}
-                    >
-                      / {tier.period}
-                    </span>
-                  </div>
-                  <p
-                    className={`mt-3 text-sm leading-relaxed ${tier.featured ? "text-background/70" : "text-muted-foreground"}`}
-                    dangerouslySetInnerHTML={{ __html: tier.description }}
-                  />
-                </div>
-
-                <ul className="mt-8 flex-1 space-y-3">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm">
-                      <Check
-                        className={`mt-0.5 h-4 w-4 shrink-0 ${tier.featured ? "text-background" : "text-foreground"}`}
-                      />
-                      <span
-                        className={
-                          tier.featured
-                            ? "text-background/90"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                  {tier.missing.map((f) => (
-                    <li
-                      key={f}
-                      className="flex items-start gap-3 text-sm opacity-30"
-                    >
-                      <span className="mt-0.5 h-4 w-4 shrink-0 text-center leading-none">
-                        –
-                      </span>
-                      <span
-                        className={
-                          tier.featured
-                            ? "text-background/90"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-8">
-                  <Button
-                    size="lg"
-                    className={`w-full ${
+        {/* Parallax wrapper — separated from animation wrapper to avoid transform conflicts */}
+        <motion.div style={{ y: contentY }} className="will-change-transform">
+          {/* Stagger container for coordinated card entry */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.15 }}
+            className="mt-16 grid md:grid-cols-2"
+          >
+            {tiers.map((tier) => (
+              <motion.div key={tier.name} variants={scaleUp} className="h-full">
+                {/* Hover lift — subtle on featured, gentle on default */}
+                <motion.div
+                  whileHover={{
+                    y: tier.featured ? -3 : -5,
+                  }}
+                  transition={springs.gentle}
+                  className="h-full"
+                >
+                  <div
+                    className={`relative flex h-full flex-col border p-8 ${
                       tier.featured
-                        ? "bg-background text-foreground hover:bg-background/90"
-                        : ""
+                        ? "border-foreground/20 bg-foreground text-background"
+                        : "border-[hsl(var(--border)/0.15)] bg-card"
                     }`}
-                    variant={tier.featured ? "default" : "outline"}
-                    asChild
                   >
-                    <Link href={tier.href as "/app/upload" | "/auth"}>
-                      {tier.cta}
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </FadeIn>
-          ))}
+                    {tier.featured && (
+                      <div className="absolute -top-3 left-8">
+                        <span className="border border-foreground/20 bg-background px-3 py-1 text-xs font-semibold text-foreground">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+
+                    <div>
+                      <p
+                        className={`label-sm ${tier.featured ? "text-background/60" : "text-muted-foreground"}`}
+                      >
+                        {tier.name.toUpperCase()}
+                      </p>
+                      <div className="mt-3 flex items-end gap-2">
+                        <span
+                          className={`font-display text-4xl font-bold ${tier.featured ? "text-background" : "text-foreground"}`}
+                        >
+                          {tier.price}
+                        </span>
+                        <span
+                          className={`mb-1 text-sm ${tier.featured ? "text-background/60" : "text-muted-foreground"}`}
+                        >
+                          / {tier.period}
+                        </span>
+                      </div>
+                      <p
+                        className={`mt-3 text-sm leading-relaxed ${tier.featured ? "text-background/70" : "text-muted-foreground"}`}
+                        dangerouslySetInnerHTML={{ __html: tier.description }}
+                      />
+                    </div>
+
+                    <ul className="mt-8 flex-1 space-y-3">
+                      {tier.features.map((f) => (
+                        <li key={f} className="flex items-start gap-3 text-sm">
+                          <Check
+                            className={`mt-0.5 h-4 w-4 shrink-0 ${tier.featured ? "text-background" : "text-foreground"}`}
+                          />
+                          <span
+                            className={
+                              tier.featured
+                                ? "text-background/90"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {f}
+                          </span>
+                        </li>
+                      ))}
+                      {tier.missing.map((f) => (
+                        <li
+                          key={f}
+                          className="flex items-start gap-3 text-sm opacity-30"
+                        >
+                          <span className="mt-0.5 h-4 w-4 shrink-0 text-center leading-none">
+                            –
+                          </span>
+                          <span
+                            className={
+                              tier.featured
+                                ? "text-background/90"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {f}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="mt-8">
+                      <Button
+                        size="lg"
+                        className={`w-full ${
+                          tier.featured
+                            ? "bg-background text-foreground hover:bg-background/90"
+                            : ""
+                        }`}
+                        variant={tier.featured ? "default" : "outline"}
+                        asChild
+                      >
+                        <Link href={tier.href as "/app/upload" | "/auth"}>
+                          {tier.cta}
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            ))}
+          </motion.div>
         </motion.div>
       </div>
     </section>

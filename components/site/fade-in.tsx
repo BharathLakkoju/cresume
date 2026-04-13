@@ -40,18 +40,28 @@ export function FadeIn({
   }, []);
 
   const directionMap = {
-    up: { y: y ?? 28, x: 0 },
-    down: { y: -(y ?? 28), x: 0 },
-    left: { y: 0, x: x ?? 28 },
-    right: { y: 0, x: -(x ?? 28) },
+    up: { y: y ?? 24, x: 0 },
+    down: { y: -(y ?? 24), x: 0 },
+    left: { y: 0, x: x ?? 24 },
+    right: { y: 0, x: -(x ?? 24) },
   };
 
   const offset = directionMap[direction];
 
+  const initial = { opacity: 0, y: offset.y, x: offset.x, scale: scale ?? 1 };
+  const whileInViewTarget = { opacity: 1, y: 0, x: 0, scale: 1 };
+
+  // Spring physics for a tactile, premium reveal feel.
+  const transition = {
+    type: "spring" as const,
+    stiffness: 160,
+    damping: 22,
+    mass: 0.9,
+    delay,
+  };
+
   // SSR + first hydration: plain div (no Framer inline styles → no hydration mismatch).
   // After mount: motion.div with a real `initial` so whileInView fires correctly.
-  // Note: Framer Motion only reads `initial` once on mount, so we can't change it after
-  // the fact — we must swap the element type entirely.
   if (!isMounted) {
     return (
       <div id={id} className={cn(className)}>
@@ -63,10 +73,10 @@ export function FadeIn({
   return (
     <motion.div
       id={id}
-      initial={{ opacity: 0, y: offset.y, x: offset.x, scale: scale ?? 1 }}
-      whileInView={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+      initial={initial}
+      whileInView={whileInViewTarget}
       viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.65, ease: [0.25, 0.46, 0.45, 0.94], delay }}
+      transition={transition}
       className={cn(className)}
     >
       {children}
