@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ export function AuthForm() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -146,17 +148,31 @@ export function AuthForm() {
           <Label htmlFor="password" className="label-sm text-muted-foreground">
             PASSWORD
           </Label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            placeholder={
-              mode === "signup" ? "Min. 8 characters" : "Your password"
-            }
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="h-12 bg-surface-low text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-foreground"
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              placeholder={
+                mode === "signup" ? "Min. 8 characters" : "Your password"
+              }
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="h-12 bg-surface-low pr-11 text-foreground placeholder:text-muted-foreground/50 focus-visible:ring-foreground"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
 
         <Button
