@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 function isAnonymousTrialPath(pathname: string) {
-  return pathname === "/app/upload" || pathname.startsWith("/app/upload/");
+  return (
+    pathname === "/app/upload" ||
+    pathname.startsWith("/app/upload/") ||
+    pathname === "/app/analyze" ||
+    pathname.startsWith("/app/analyze/")
+  );
 }
 
 export async function proxy(request: NextRequest) {

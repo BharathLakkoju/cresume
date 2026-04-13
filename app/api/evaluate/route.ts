@@ -121,6 +121,7 @@ export async function POST(request: Request) {
           .from("user_evaluations")
           .select("job_title, overall_score, mandatory_skills, missing_keywords, created_at")
           .eq("user_id", user.id)
+          .eq("mode", "analysis")
           .order("created_at", { ascending: false })
           .limit(8);
 
@@ -335,12 +336,13 @@ export async function POST(request: Request) {
         ]);
         void evalResult;
 
-        // After insert, compute correct aggregate stats from user_evaluations
+        // After insert, compute correct aggregate stats from analysis-mode rows only
         if (careerSummary) {
           const { data: allScores } = await dbClient
             .from("user_evaluations")
             .select("overall_score")
-            .eq("user_id", user.id);
+            .eq("user_id", user.id)
+            .eq("mode", "analysis");
 
           if (allScores && allScores.length > 0) {
             const scores = allScores.map((r) => r.overall_score as number);

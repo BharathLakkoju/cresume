@@ -101,7 +101,13 @@ export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
                 {result.aiInsight}
               </p>
             )}
-            <Button variant="default" className="mt-6" size="sm">
+            <Button
+              variant="default"
+              className="mt-6"
+              size="sm"
+              disabled
+              title="Download report is not available yet"
+            >
               <Download className="mr-2 h-3.5 w-3.5" />
               Download Report
             </Button>

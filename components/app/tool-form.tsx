@@ -7,7 +7,6 @@ import {
   type FormEvent,
   type DragEvent,
   useCallback,
-  type SetStateAction,
 } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -380,10 +379,9 @@ export function ToolForm({ mode }: { mode: ToolMode }) {
             <p className="mt-2 text-sm text-muted-foreground">{meta.sub}</p>
             <div className="mt-6">
               <ResumeBuilderForm
-                onResult={(result: SetStateAction<TailoringResult | null>) => {
-                  const r = result as TailoringResult;
-                  setTailoringResult(r);
-                  setLastBuilderResult(r);
+                onResult={(result: TailoringResult) => {
+                  setTailoringResult(result);
+                  setLastBuilderResult(result);
                   setShowResults(true);
                 }}
                 onAuthGate={() => setShowAuthGate(true)}

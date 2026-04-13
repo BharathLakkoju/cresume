@@ -15,7 +15,10 @@ export const ipUsage = pgTable("ip_usage", {
 
 /**
  * Stores evaluation metadata per authenticated user.
- * NO resume content or job description text is saved here — only scores and metadata.
+ * `full_result` holds the complete AI evaluation payload written by /api/evaluate,
+ * /api/tailor, and /api/build — this may include generated resume content and contact
+ * details. Ensure RLS policies restrict SELECT/INSERT to the owning user only, and
+ * review your data-retention policy regarding this PII before going to production.
  * user_id references auth.users(id) — enforced via Supabase RLS, not FK constraint.
  * RLS: users can only SELECT/INSERT their own rows.
  */

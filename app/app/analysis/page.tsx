@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 import { ResultsDashboard } from "@/components/site/results-dashboard";
@@ -22,7 +23,14 @@ export default function AnalysisPage() {
             Upload a resume to begin.
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Go to Upload to run your first ATS evaluation.
+            Go to{" "}
+            <Link
+              href="/app/analyze"
+              className="underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              Analyze
+            </Link>{" "}
+            to run your first ATS evaluation.
           </p>
         </motion.div>
       </div>
