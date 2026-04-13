@@ -182,7 +182,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
 #role-guides .overflow-x-auto::-webkit-scrollbar {
   display: none;
 }
-:-webkit-scrollbar {
+*::-webkit-scrollbar {
   width: 0;
   height: 0;
 }
