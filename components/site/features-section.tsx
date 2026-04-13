@@ -2,14 +2,10 @@
 
 import { useRef } from "react";
 import { Brain, FileSearch, Target } from "lucide-react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 
 import { FadeIn } from "@/components/site/fade-in";
-import { cardVariants, iconVariants, springs } from "@/lib/animation-variants";
+import { cardVariants, iconVariants } from "@/lib/animation-variants";
 
 const pillars = [
   {

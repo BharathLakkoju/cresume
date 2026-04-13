@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -92,25 +93,37 @@ export function AuthForm() {
   return (
     <div className="bg-surface-lowest p-8 shadow-ambient">
       {/* Mode Toggle */}
-      <div className="mb-6 flex bg-surface-low p-1">
-        {(["signup", "login"] as AuthMode[]).map((m) => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => {
-              setMode(m);
-              setError(null);
-              setMessage(null);
-            }}
-            className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-widest transition-all duration-200 ease-out ${
-              mode === m
-                ? "bg-foreground text-white shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {m === "signup" ? "Create Account" : "Sign In"}
-          </button>
-        ))}
+      <div className="mb-6 flex bg-surface-low p-1 gap-0.5">
+        {(["signup", "login"] as AuthMode[]).map((m) => {
+          const isActive = mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => {
+                setMode(m);
+                setError(null);
+                setMessage(null);
+              }}
+              className="relative flex-1 py-2.5 z-10 flex items-center justify-center transition-all duration-200 ease-out"
+            >
+              {isActive && (
+                <motion.div
+                  layoutId="auth-mode-indicator"
+                  className="absolute inset-0 bg-foreground"
+                  transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                />
+              )}
+              <span
+                className={`relative z-10 text-xs font-semibold uppercase tracking-widest transition-colors duration-150 ${
+                  isActive ? "text-white" : "text-muted-foreground"
+                }`}
+              >
+                {m === "signup" ? "Create Account" : "Sign In"}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
