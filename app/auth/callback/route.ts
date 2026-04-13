@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/app/upload";
+  const next = searchParams.get("next") ?? "/app";
 
   if (!code) {
     return NextResponse.redirect(`${origin}/auth?error=missing_code`);

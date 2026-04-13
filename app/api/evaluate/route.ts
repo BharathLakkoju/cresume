@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { parseResumeFile } from "@/lib/ats/parser";
-import type { AtsEvaluationResult, ScoreBreakdown } from "@/lib/ats/types";
+import type { AtsEvaluationResult, CareerSummary, ScoreBreakdown } from "@/lib/ats/types";
 import { callOpenRouter, parseJsonFromModel } from "@/lib/openrouter/client";
 import { ANALYSIS_SYSTEM_PROMPT, summarizeInputs } from "@/lib/openrouter/prompts";
 import { serverEvaluationSchema } from "@/lib/validations/evaluation";
-import { getCurrentUser } from "@/lib/supabase/auth-helpers";
+import { getAuthenticatedClient } from "@/lib/supabase/auth-helpers";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -22,6 +22,7 @@ type UsageClient =
  *
  * Accepts a resume file + job description text.
  * Sends both to OpenRouter for a COMPLETE AI-driven ATS evaluation.
+ * Returns { analysis, careerSummary } from a single AI call to minimise token costs.
  * No local scoring engine — the AI is the sole source of truth.
  */
 export async function POST(request: Request) {
@@ -55,8 +56,11 @@ export async function POST(request: Request) {
     }
     const jdText = parsed.data.jdText;
 
-    /* ── 3. Rate-limit gate (IP-based for anonymous users) ──── */
-    const user = await getCurrentUser();
+    /* ── 3. Auth + rate-limit gate ────────────────────────────── */
+    const authResult = await getAuthenticatedClient();
+    const user = authResult?.user ?? null;
+    const userSupabase = authResult?.supabase ?? null;
+
     if (!user) {
       const forwarded = request.headers.get("x-forwarded-for");
       const ip = forwarded?.split(",")[0]?.trim() || "unknown";
@@ -77,7 +81,6 @@ export async function POST(request: Request) {
           );
         }
 
-        // Defer counting usage until a successful AI response is produced.
         anonymousUsageContext = {
           ip,
           currentCount: row?.use_count ?? 0,
@@ -109,9 +112,31 @@ export async function POST(request: Request) {
       );
     }
 
+    /* ── 4b. Fetch past analyses for context (authenticated) ──── */
+    let pastAnalysesContext = "";
+    if (user) {
+      const dbClient = getSupabaseServiceClient() ?? userSupabase;
+      if (dbClient) {
+        const { data: pastRows } = await dbClient
+          .from("user_evaluations")
+          .select("job_title, overall_score, mandatory_skills, missing_keywords, created_at")
+          .eq("user_id", user.id)
+          .eq("mode", "analysis")
+          .order("created_at", { ascending: false })
+          .limit(8);
+
+        if (pastRows && pastRows.length > 0) {
+          const lines = pastRows.map((r, i) =>
+            `${i + 1}. Role: ${r.job_title ?? "Unknown"} | Score: ${r.overall_score} | Date: ${r.created_at?.slice(0, 10)} | Missing: ${(r.missing_keywords as string[] ?? []).slice(0, 5).join(", ")}`
+          );
+          pastAnalysesContext = `\n\n---\n\n## PAST ANALYSES (${pastRows.length} scans)\n${lines.join("\n")}`;
+        }
+      }
+    }
+
     /* ── 5. Call AI for COMPLETE evaluation ───────────────────── */
     const { resume: trimmedResume, jd: trimmedJd } = summarizeInputs(resumeText, jdText);
-    const userMessage = `## RESUME\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}`;
+    const userMessage = `## RESUME\n\n${trimmedResume}\n\n---\n\n## JOB DESCRIPTION\n\n${trimmedJd}${pastAnalysesContext}`;
 
     let aiRawResponse: string | null;
     try {
@@ -120,7 +145,7 @@ export async function POST(request: Request) {
         userMessage,
         undefined, // use default model
         30_000,    // 30s timeout — streaming handles the rest
-        3000       // reduced for faster completion
+        5000       // increased for dual-JSON response (analysis + careerSummary)
       );
     } catch (configError) {
       // API key not configured
@@ -152,7 +177,7 @@ export async function POST(request: Request) {
     }
 
     /* ── 6. Parse and validate AI response ───────────────────── */
-    interface AiEvaluation {
+    interface AiEvaluationInner {
       overallScore: number;
       breakdown: ScoreBreakdown;
       missingKeywords: string[];
@@ -162,9 +187,32 @@ export async function POST(request: Request) {
       unmatchedSkills: string[];
       detectedRole: string | null;
       aiInsight: string | null;
+      mandatorySkills: string[];
+      optionalSkills: string[];
+      highValueSkills: string[];
+      projectRecommendations: Array<{ title: string; description: string; skills: string[]; impact: string; priority?: string }>;
+      careerGapSummary: string | null;
     }
 
-    const aiResult = parseJsonFromModel<AiEvaluation>(aiRawResponse);
+    interface AiCareerSummaryInner {
+      topSkillGaps: string[];
+      projectsToStart: Array<{ title: string; description: string; skills: string[]; impact: string; priority?: string }>;
+      targetRoles: string[];
+      careerNarrative: string;
+      nextStep: string;
+      progressSummary: string | null;
+    }
+
+    interface AiWrappedResponse {
+      analysis: AiEvaluationInner;
+      careerSummary: AiCareerSummaryInner;
+    }
+
+    const aiWrapped = parseJsonFromModel<AiWrappedResponse>(aiRawResponse);
+
+    // The AI must return the wrapper. If it didn't, the response is unusable.
+    const aiResult = aiWrapped?.analysis;
+    const aiCareer = aiWrapped?.careerSummary;
 
     if (!aiResult || typeof aiResult.overallScore !== "number" || !aiResult.breakdown) {
       return NextResponse.json(
@@ -201,15 +249,48 @@ export async function POST(request: Request) {
       unmatchedSkills: Array.isArray(aiResult.unmatchedSkills) ? aiResult.unmatchedSkills : [],
       detectedRole: aiResult.detectedRole ?? null,
       aiInsight: aiResult.aiInsight ?? null,
+      mandatorySkills: Array.isArray(aiResult.mandatorySkills) ? aiResult.mandatorySkills : [],
+      optionalSkills: Array.isArray(aiResult.optionalSkills) ? aiResult.optionalSkills : [],
+      highValueSkills: Array.isArray(aiResult.highValueSkills) ? aiResult.highValueSkills : [],
+      projectRecommendations: Array.isArray(aiResult.projectRecommendations)
+        ? aiResult.projectRecommendations.map((p) => ({
+            title: p.title || "",
+            description: p.description || "",
+            skills: Array.isArray(p.skills) ? p.skills : [],
+            impact: p.impact || "",
+            priority: (["high", "medium", "low"].includes(p.priority ?? "") ? p.priority : "medium") as "high" | "medium" | "low"
+          }))
+        : [],
+      careerGapSummary: aiResult.careerGapSummary ?? null,
       generatedAt: new Date().toISOString(),
       processingMs: Date.now() - start
     };
 
+    const careerSummary: CareerSummary | null = aiCareer
+      ? {
+          topSkillGaps: Array.isArray(aiCareer.topSkillGaps) ? aiCareer.topSkillGaps : [],
+          projectsToStart: Array.isArray(aiCareer.projectsToStart)
+            ? aiCareer.projectsToStart.map((p) => ({
+                title: p.title || "",
+                description: p.description || "",
+                skills: Array.isArray(p.skills) ? p.skills : [],
+                impact: p.impact || "",
+                priority: (["high", "medium", "low"].includes(p.priority ?? "") ? p.priority : "medium") as "high" | "medium" | "low"
+              }))
+            : [],
+          targetRoles: Array.isArray(aiCareer.targetRoles) ? aiCareer.targetRoles : [],
+          careerNarrative: aiCareer.careerNarrative ?? "",
+          nextStep: aiCareer.nextStep ?? "",
+          progressSummary: aiCareer.progressSummary ?? null
+        }
+      : null;
+
     /* ── 8. Save metadata for authenticated users ─────────────── */
     if (user) {
-      const service = getSupabaseServiceClient();
-      if (service) {
-        await service
+      // Prefer the service-role client (bypasses RLS). Fall back to the user's own session client.
+      const dbClient = getSupabaseServiceClient() ?? userSupabase;
+      if (dbClient) {
+        const evalInsert = dbClient
           .from("user_evaluations")
           .insert({
             user_id: user.id,
@@ -219,15 +300,66 @@ export async function POST(request: Request) {
             suggestions: result.suggestions,
             missing_keywords: result.missingKeywords,
             matched_skills: result.matchedSkills,
+            resume_gaps: result.resumeGaps,
+            mandatory_skills: result.mandatorySkills,
+            optional_skills: result.optionalSkills,
+            high_value_skills: result.highValueSkills,
+            project_recommendations: result.projectRecommendations,
+            career_gap_summary: result.careerGapSummary,
+            ai_insight: result.aiInsight,
+            full_result: result,
             mode: "analysis"
-          })
-          .then(({ error }) => {
-            if (error) void error;
           });
+
+        // Upsert career summary into its own table
+        const summaryUpsert = careerSummary
+          ? dbClient.from("user_career_summary").upsert({
+              user_id: user.id,
+              top_skill_gaps: careerSummary.topSkillGaps,
+              projects_to_start: careerSummary.projectsToStart,
+              target_roles: careerSummary.targetRoles,
+              career_narrative: careerSummary.careerNarrative,
+              next_step: careerSummary.nextStep,
+              progress_summary: careerSummary.progressSummary,
+              // Compute aggregate stats across all analyses (including this one)
+              total_analyses: 0, // will be overwritten below
+              avg_score: 0,
+              best_score: 0,
+              updated_at: new Date().toISOString()
+            }, { onConflict: "user_id" })
+          : null;
+
+        // Run inserts; compute aggregate stats for the career summary row
+        const [evalResult] = await Promise.all([
+          evalInsert.then(({ error }) => { if (error) console.error("[evaluate] eval insert error:", error.message); }),
+          summaryUpsert?.then(({ error }) => { if (error) console.error("[evaluate] career summary upsert error:", error.message); })
+        ]);
+        void evalResult;
+
+        // After insert, compute correct aggregate stats from analysis-mode rows only
+        if (careerSummary) {
+          const { data: allScores } = await dbClient
+            .from("user_evaluations")
+            .select("overall_score")
+            .eq("user_id", user.id)
+            .eq("mode", "analysis");
+
+          if (allScores && allScores.length > 0) {
+            const scores = allScores.map((r) => r.overall_score as number);
+            const total = scores.length;
+            const avg = Math.round(scores.reduce((a, b) => a + b, 0) / total);
+            const best = Math.max(...scores);
+
+            await dbClient.from("user_career_summary").upsert(
+              { user_id: user.id, total_analyses: total, avg_score: avg, best_score: best },
+              { onConflict: "user_id" }
+            ).then(({ error }) => { if (error) console.error("[evaluate] stats upsert error:", error.message); });
+          }
+        }
       }
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, careerSummary });
   } catch (err) {
     void err;
     return NextResponse.json(

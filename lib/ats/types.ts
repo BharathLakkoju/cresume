@@ -25,6 +25,23 @@ export interface AtsGap {
   detail: string;
 }
 
+export interface ProjectRecommendation {
+  title: string;
+  description: string;
+  skills: string[];
+  impact: string;
+  priority?: "high" | "medium" | "low";
+}
+
+export interface CareerSummary {
+  topSkillGaps: string[];
+  projectsToStart: ProjectRecommendation[];
+  targetRoles: string[];
+  careerNarrative: string;
+  nextStep: string;
+  progressSummary: string | null;
+}
+
 export interface AtsEvaluationResult {
   overallScore: number;
   breakdown: ScoreBreakdown;
@@ -35,6 +52,14 @@ export interface AtsEvaluationResult {
   unmatchedSkills: string[];
   detectedRole: string | null;
   aiInsight: string | null;
+  // Enhanced gap analysis fields
+  mandatorySkills: string[];
+  optionalSkills: string[];
+  highValueSkills: string[];
+  projectRecommendations: ProjectRecommendation[];
+  careerGapSummary: string | null;
   generatedAt: string;
   processingMs: number;
+  // Populated by the API when the user is authenticated; persisted in user_career_summary
+  careerSummary?: CareerSummary;
 }

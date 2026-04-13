@@ -162,13 +162,13 @@ export function EvaluatorSection() {
                     <Textarea
                       id="jd-text"
                       value={jdText}
-                      maxLength={12000}
+                      maxLength={10000}
                       onChange={(event) => setJdText(event.target.value)}
                       placeholder="Paste the full job description here so the evaluator can extract role, keyword, and skills signals."
                     />
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span>Minimum 120 characters for reliable matching</span>
-                      <span>{jdText.length}/12000</span>
+                      <span>{jdText.length}/10000</span>
                     </div>
                   </div>
 

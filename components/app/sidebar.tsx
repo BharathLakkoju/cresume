@@ -5,8 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
-  Plus,
-  BarChart3,
+  ScanSearch,
+  Wand2,
+  PenLine,
   Settings,
   LogOut,
   User as UserIcon,
@@ -26,8 +27,9 @@ const navItems: Array<{
   icon: typeof Home;
 }> = [
   { label: "HOME", href: "/app" as Route, icon: Home },
-  { label: "UPLOAD", href: "/app/upload" as Route, icon: Plus },
-  { label: "RESULTS", href: "/app/analysis" as Route, icon: BarChart3 },
+  { label: "ANALYZE", href: "/app/analyze" as Route, icon: ScanSearch },
+  { label: "TAILOR", href: "/app/tailor" as Route, icon: Wand2 },
+  { label: "BUILD", href: "/app/build" as Route, icon: PenLine },
   { label: "PROFILE", href: "/app/profile" as Route, icon: UserIcon },
 ];
 
@@ -177,45 +179,6 @@ export function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
-          const isUpload = item.label === "UPLOAD";
-
-          // if (isUpload) {
-          //   return (
-          //     <Link
-          //       key={item.href}
-          //       href={item.href}
-          //       className={cn(
-          //         "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-all duration-200",
-          //       )}
-          //     >
-          //       <span
-          //         className={cn(
-          //           "flex items-center justify-center transition-all duration-200 ease-out",
-          //           active
-          //             ? "h-5 w-5 bg-foreground shadow-panel"
-          //             : "h-8 w-8 bg-surface-highest",
-          //         )}
-          //       >
-          //         <Plus
-          //           className={cn(
-          //             "transition-all duration-200",
-          //             active
-          //               ? "h-5 w-5 text-primary-foreground"
-          //               : "h-4 w-4 text-muted-foreground",
-          //           )}
-          //         />
-          //       </span>
-          //       <span
-          //         className={cn(
-          //           "text-[9px] font-semibold uppercase tracking-widest mt-0.5",
-          //           active ? "text-foreground" : "text-muted-foreground",
-          //         )}
-          //       >
-          //         {item.label}
-          //       </span>
-          //     </Link>
-          //   );
-          // }
 
           return (
             <Link

@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { AtsEvaluationResult } from "@/lib/ats/types";
+import type { TailoringResult } from "@/components/site/tailoring-dashboard";
 
 export const EVALUATION_HISTORY_STORAGE_KEY = "ats-precision-history";
 
@@ -17,13 +18,19 @@ interface HistoryEntry {
 interface EvaluationStore {
   latestResult: AtsEvaluationResult | null;
   history: HistoryEntry[];
+  lastTailoringResult: TailoringResult | null;
+  lastBuilderResult: TailoringResult | null;
   setLatestResult: (jobTitleHint: string, result: AtsEvaluationResult) => void;
+  setLastTailoringResult: (result: TailoringResult) => void;
+  setLastBuilderResult: (result: TailoringResult) => void;
   clearResults: () => void;
 }
 
 const initialEvaluationState = {
   latestResult: null,
-  history: [] as HistoryEntry[]
+  history: [] as HistoryEntry[],
+  lastTailoringResult: null as TailoringResult | null,
+  lastBuilderResult: null as TailoringResult | null,
 };
 
 export const useEvaluationStore = create<EvaluationStore>()(
@@ -43,6 +50,8 @@ export const useEvaluationStore = create<EvaluationStore>()(
             ...state.history
           ].slice(0, 8)
         })),
+      setLastTailoringResult: (result) => set({ lastTailoringResult: result }),
+      setLastBuilderResult: (result) => set({ lastBuilderResult: result }),
       clearResults: () => set(initialEvaluationState)
     }),
     {

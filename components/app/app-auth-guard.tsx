@@ -9,7 +9,12 @@ import { clearEvaluationSessionData } from "@/store/evaluation-store";
 import { clearProfileSessionData } from "@/store/profile-store";
 
 function isAnonymousTrialPath(pathname: string) {
-  return pathname === "/app/upload" || pathname.startsWith("/app/upload/");
+  return (
+    pathname === "/app/upload" ||
+    pathname.startsWith("/app/upload/") ||
+    pathname === "/app/analyze" ||
+    pathname.startsWith("/app/analyze/")
+  );
 }
 
 export function AppAuthGuard() {

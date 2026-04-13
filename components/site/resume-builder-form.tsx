@@ -2,14 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  FileText,
-  Loader2,
-  Shield,
-  Wand2,
-  UserCheck,
-  AlertTriangle,
-} from "lucide-react";
+import { FileText, Loader2, Shield, Wand2, UserCheck } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -211,114 +204,156 @@ export function ResumeBuilderForm({
 
   /* ── Main render ── */
   return (
-    <div className="mx-auto w-full max-w-xl space-y-5 max-lg:mb-10">
-      {/* Profile status */}
-      {profileName ? (
-        <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 px-4 py-3 text-sm text-green-400">
-          <UserCheck className="h-4 w-4 shrink-0" />
-          <span>
-            Building as <strong>{profileName}</strong> — details loaded from
-            your saved profile.
-          </span>
+    <div className="grid gap-px border border-foreground/10 lg:grid-cols-3">
+      {/* ── Profile status cell ─────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={`flex flex-col justify-between p-6 ${
+          profileName
+            ? "bg-foreground text-primary-foreground"
+            : "bg-surface-low"
+        }`}
+      >
+        <div>
+          <p
+            className={`label-sm ${
+              profileName ? "text-white/50" : "text-muted-foreground"
+            }`}
+          >
+            BUILDING AS
+          </p>
+          {profileName ? (
+            <>
+              <p className="mt-3 font-display text-2xl font-black tracking-tight text-white">
+                {profileName}
+              </p>
+              <p className="mt-1 text-xs text-white/50">
+                Details loaded from saved profile
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-3 font-display text-lg font-bold text-foreground">
+                No profile saved
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Add your resume details in Profile first
+              </p>
+              <Link
+                href="/app/profile"
+                className="mt-4 inline-flex items-center gap-1.5 label-sm text-foreground underline-offset-2 hover:underline"
+              >
+                Go to Profile →
+              </Link>
+            </>
+          )}
         </div>
-      ) : (
-        <div className="flex items-center gap-3 bg-yellow-500/10 border border-yellow-500/20 px-4 py-3 text-sm text-yellow-400">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>
-            No profile saved.{" "}
-            <Link
-              href="/app/profile"
-              className="underline font-semibold hover:text-yellow-300"
-            >
-              Go to Profile
-            </Link>{" "}
-            to add your resume details first.
-          </span>
-        </div>
-      )}
+        {profileName && (
+          <div className="mt-6 flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-white/60" />
+            <span className="label-sm text-white/60">PROFILE LOADED</span>
+          </div>
+        )}
+      </motion.div>
 
-      {/* JD */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
+      {/* ── JD cell ─────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="flex flex-col bg-surface-lowest p-6 lg:col-span-2"
+      >
+        <div className="mb-4 flex items-center justify-between">
           <Label className="label-sm flex items-center gap-2 text-foreground">
             <FileText className="h-4 w-4" />
             TARGET JOB DESCRIPTION
             <span className="text-destructive">*</span>
           </Label>
           <span className="label-sm text-muted-foreground">
-            {jdText.length} / 12000
+            {jdText.length} / 10000
           </span>
         </div>
-        <div className="relative h-56 sm:h-64 bg-surface-low ring-1 ring-surface-highest focus-within:ring-foreground/30 transition-shadow">
+        <div className="relative flex-1 min-h-56 bg-surface-base ring-1 ring-surface-highest focus-within:ring-foreground/30 transition-shadow">
           <textarea
             value={jdText}
-            maxLength={12000}
+            maxLength={10000}
             onChange={(e) => setJdText(e.target.value)}
-            placeholder="Paste the full job description here. The AI will tailor your resume to match it at ≥95% ATS."
-            className="h-full w-full resize-none bg-transparent p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            placeholder="Paste the full job description here. The AI will build your resume to match it at ≥95% ATS."
+            className="absolute inset-0 h-full w-full resize-none overflow-y-auto bg-transparent p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
           />
           <div className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1.5">
             <span className="label-sm text-muted-foreground/60">
-              PRECISION MODE ACTIVE
+              PRECISION MODE
             </span>
             <span className="h-1.5 w-1.5 bg-foreground/60" />
           </div>
         </div>
-      </div>
-
-      {/* Format */}
-      <div className="bg-surface-low p-4">
-        <p className="label-sm text-muted-foreground">EXPORT FORMAT</p>
-        <div className="mt-2 flex gap-2">
-          {(["pdf", "docx"] as const).map((fmt) => (
-            <button
-              key={fmt}
-              type="button"
-              onClick={() => setFormat(fmt)}
-              className={`flex-1 py-2 text-xs font-semibold uppercase tracking-widest transition-all duration-200 ease-out ${
-                format === fmt
-                  ? "bg-foreground text-primary-foreground shadow-sm"
-                  : "bg-surface-highest text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {fmt}
-            </button>
-          ))}
+        <div className="mt-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-surface-highest" />
+          <span className="label-sm text-muted-foreground">BUILD MODE</span>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Error */}
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="text-sm font-medium text-destructive"
-          >
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
-
-      {/* Submit */}
-      <Button
-        type="button"
-        size="xl"
-        className="w-full"
-        onClick={handleSubmit}
-        disabled={isSubmitting || !profileName}
+      {/* ── Action strip ────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.15 }}
+        className="flex flex-col gap-4 bg-foreground p-6 sm:flex-row sm:items-center sm:justify-between lg:col-span-3"
       >
-        <span className="flex items-center gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex items-center gap-2">
+            <span className="label-sm text-white/50 shrink-0">FORMAT</span>
+            <div className="flex gap-1">
+              {(["pdf", "docx"] as const).map((fmt) => (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setFormat(fmt)}
+                  className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-widest transition-all duration-200 ease-out ${
+                    format === fmt
+                      ? "bg-white text-foreground"
+                      : "text-white/50 hover:text-white"
+                  }`}
+                >
+                  {fmt}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {error && (
+              <motion.p
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                className="text-sm font-medium text-red-400"
+              >
+                {error}
+              </motion.p>
+            )}
+          </AnimatePresence>
+
+          <p className="flex items-center gap-1.5 label-sm text-white/40">
+            <Shield className="h-3.5 w-3.5" />
+            DATA PROCESSED SECURELY
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          size="lg"
+          className="shrink-0 bg-white text-foreground hover:bg-white/90 gap-2"
+          onClick={handleSubmit}
+          disabled={isSubmitting || !profileName}
+        >
           <Wand2 className="h-4 w-4" />
           BUILD & OPTIMIZE RESUME
-        </span>
-      </Button>
-
-      <p className="flex items-center justify-center gap-2 label-sm text-muted-foreground">
-        <Shield className="h-3.5 w-3.5" />
-        DATA PROCESSED SECURELY. PRIVACY BY DESIGN.
-      </p>
+        </Button>
+      </motion.div>
     </div>
   );
 }

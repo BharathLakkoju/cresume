@@ -315,12 +315,20 @@ export async function POST(request: Request) {
           .from("user_evaluations")
           .insert({
             user_id: user.id,
-            job_title: aiResult.tailoredResume.experience?.[0]?.title ?? "Built Resume",
+            job_title: aiResult.companyName
+              ? `${aiResult.tailoredResume.experience?.[0]?.title ?? "Build"} @ ${aiResult.companyName}`
+              : (aiResult.tailoredResume.experience?.[0]?.title ?? "Built Resume"),
             overall_score: aiResult.atsScore ?? 0,
             breakdown: {},
             suggestions: aiResult.changesApplied ?? [],
             missing_keywords: [],
             matched_skills: [],
+            resume_gaps: aiResult.issues ?? [],
+            mandatory_skills: [],
+            optional_skills: [],
+            high_value_skills: [],
+            project_recommendations: [],
+            full_result: aiResult,
             mode: "builder",
           })
           .then(({ error }) => {

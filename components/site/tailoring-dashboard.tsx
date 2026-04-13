@@ -556,49 +556,69 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* ── Header ──────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-foreground p-6 sm:p-8 text-primary-foreground"
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="label-sm text-white/50">RESUME TAILORING COMPLETE</p>
-            <h2 className="mt-2 font-display text-3xl font-black tracking-tight text-white sm:text-4xl">
-              {resume.name ?? "Your Resume"}
-            </h2>
-            <p className="mt-2 text-sm text-white/60">
-              {highCount > 0
-                ? `${highCount} critical issue${highCount > 1 ? "s" : ""} fixed · ready to download`
-                : `${changes.length} improvements applied · ready to download`}
-            </p>
-            {result.atsScore != null && (
-              <div className="mt-4 inline-flex items-center gap-3 bg-white/10 px-4 py-2.5">
-                <span className="font-display text-3xl font-black text-white">
-                  {result.atsScore}%
-                </span>
-                <div>
-                  <p className="text-xs font-semibold text-white/80">
-                    ATS MATCH SCORE
-                  </p>
-                  <p className="text-[10px] text-white/50">
-                    Predicted keyword match
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+    <div className="border border-foreground/10">
+      {/* ── Breadcrumb bar ──────────────────────────────────────────── */}
+      <div className="grid grid-cols-[1fr_auto] items-center border-b border-foreground/10 bg-foreground px-6 py-3">
+        <span className="label-sm text-white/60">
+          {result.companyName
+            ? `TAILORING / ${result.companyName.toUpperCase()}`
+            : "RESUME TAILORING COMPLETE"}
+        </span>
+        {result.atsScore != null && (
+          <span className="label-sm text-white/60">
+            ATS MATCH · {result.atsScore}%
+          </span>
+        )}
+      </div>
 
-          {/* Download button — single format based on user choice */}
-          <div className="flex shrink-0 gap-3">
+      {/* ── Info row ────────────────────────────────────────────────── */}
+      <div className="grid gap-px md:grid-cols-[1fr_220px]">
+        {/* Name cell */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-surface-lowest p-6 sm:p-8"
+        >
+          <p className="label-sm text-muted-foreground">CANDIDATE</p>
+          <h2 className="mt-2 font-display text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+            {resume.name ?? "Your Resume"}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {highCount > 0
+              ? `${highCount} critical issue${highCount > 1 ? "s" : ""} fixed · ready to download`
+              : `${changes.length} improvements applied · ready to download`}
+          </p>
+        </motion.div>
+
+        {/* Score + download cell */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="flex flex-col justify-between gap-6 bg-foreground p-6 text-primary-foreground"
+        >
+          {result.atsScore != null ? (
+            <div>
+              <p className="label-sm text-white/50">ATS MATCH</p>
+              <p className="mt-1 font-display text-5xl font-black leading-none text-white">
+                {result.atsScore}
+                <span className="text-2xl text-white/40">%</span>
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="label-sm text-white/50">OPTIMIZED</p>
+              <p className="mt-1 font-display text-2xl font-black text-white">
+                Ready
+              </p>
+            </div>
+          )}
+          <div>
             {result.format === "docx" ? (
               <Button
                 size="sm"
-                variant="secondary"
-                className="gap-2 bg-white/10 text-white hover:bg-white/20 border-0"
+                className="w-full gap-2 border-0 bg-white/10 text-white hover:bg-white/20"
                 disabled={isDownloadingDocx}
                 onClick={async () => {
                   setIsDownloadingDocx(true);
@@ -615,8 +635,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
             ) : (
               <Button
                 size="sm"
-                variant="secondary"
-                className="gap-2 bg-white/10 text-white hover:bg-white/20 border-0"
+                className="w-full gap-2 border-0 bg-white/10 text-white hover:bg-white/20"
                 disabled={isDownloadingPdf}
                 onClick={async () => {
                   setIsDownloadingPdf(true);
@@ -632,20 +651,20 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
               </Button>
             )}
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
-      {/* ── Tabs ────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 bg-surface-low p-1">
+      {/* ── Tabs bar ────────────────────────────────────────────────── */}
+      <div className="flex border-y border-foreground/10">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
             className={cn(
-              "flex-1 px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ease-out",
+              "flex-1 border-r border-foreground/10 px-3 py-3 text-xs font-semibold uppercase tracking-wider transition-all duration-200 ease-out last:border-r-0",
               tab === t.id
-                ? "bg-foreground text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                ? "bg-foreground text-primary-foreground"
+                : "bg-surface-low text-muted-foreground hover:bg-surface-highest hover:text-foreground",
             )}
           >
             {t.label}
@@ -653,8 +672,9 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
         ))}
       </div>
 
+      {/* ── Tab content ─────────────────────────────────────────────── */}
       <AnimatePresence mode="wait">
-        {/* ── Tab: Tailored Resume Preview ──────────────────────────── */}
+        {/* Preview */}
         {tab === "preview" && (
           <motion.div
             key="preview"
@@ -668,7 +688,7 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
           </motion.div>
         )}
 
-        {/* ── Tab: Issues Found ─────────────────────────────────────── */}
+        {/* Issues */}
         {tab === "issues" && (
           <motion.div
             key="issues"
@@ -676,78 +696,77 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="space-y-3"
           >
-            {issues.length === 0 && (
+            {issues.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 No issues recorded.
               </p>
-            )}
-            {issues.map((issue, i) => (
-              <div
-                key={i}
-                className="border border-surface-highest bg-surface-lowest p-5"
-              >
-                <div className="flex items-start gap-3">
-                  <AlertTriangle
-                    className={cn(
-                      "mt-0.5 h-4 w-4 shrink-0",
-                      issue.severity === "high"
-                        ? "text-red-500"
-                        : issue.severity === "medium"
-                          ? "text-amber-500"
-                          : "text-muted-foreground",
-                    )}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-foreground">
-                        {issue.section}
-                      </span>
-                      <span
+            ) : (
+              <div className="grid gap-px">
+                {issues.map((issue, i) => (
+                  <div key={i} className="bg-surface-lowest p-5">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle
                         className={cn(
-                          "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                          severityColor(issue.severity),
+                          "mt-0.5 h-4 w-4 shrink-0",
+                          issue.severity === "high"
+                            ? "text-red-500"
+                            : issue.severity === "medium"
+                              ? "text-amber-500"
+                              : "text-muted-foreground",
                         )}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground">
+                            {issue.section}
+                          </span>
+                          <span
+                            className={cn(
+                              "px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                              severityColor(issue.severity),
+                            )}
+                          >
+                            {issue.severity}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {issue.issue}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setExpandedIssues((prev) => {
+                            const next = new Set(prev);
+                            next.has(i) ? next.delete(i) : next.add(i);
+                            return next;
+                          });
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        {issue.severity}
-                      </span>
+                        {expandedIssues.has(i) ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </button>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {issue.issue}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setExpandedIssues((prev) => {
-                        const next = new Set(prev);
-                        next.has(i) ? next.delete(i) : next.add(i);
-                        return next;
-                      });
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    {expandedIssues.has(i) ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
+                    {expandedIssues.has(i) && (
+                      <div className="ml-7 mt-3 bg-surface-low p-3">
+                        <p className="text-xs text-muted-foreground">
+                          This issue has been fixed in the tailored resume in
+                          the <strong>Tailored Resume</strong> tab.
+                        </p>
+                      </div>
                     )}
-                  </button>
-                </div>
-                {expandedIssues.has(i) && (
-                  <div className="mt-3 ml-7 bg-surface-low p-3">
-                    <p className="text-xs text-muted-foreground">
-                      This issue has been fixed in the tailored resume shown in
-                      the <strong>Tailored Resume</strong> tab.
-                    </p>
                   </div>
-                )}
+                ))}
               </div>
-            ))}
+            )}
           </motion.div>
         )}
 
-        {/* ── Tab: Changes Made ─────────────────────────────────────── */}
+        {/* Changes */}
         {tab === "changes" && (
           <motion.div
             key="changes"
@@ -755,39 +774,41 @@ export function TailoringDashboard({ result }: { result: TailoringResult }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
-            className="space-y-3"
           >
-            {changes.length === 0 && (
+            {changes.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">
                 No changes recorded.
               </p>
+            ) : (
+              <div className="grid gap-px">
+                {changes.map((change, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.05 }}
+                    className="bg-surface-lowest p-5"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-foreground text-primary-foreground">
+                        <Layers className="h-3.5 w-3.5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          {change.section}
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-foreground">
+                          {change.what}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {change.why}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             )}
-            {changes.map((change, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-                className="border border-surface-highest bg-surface-lowest p-5"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-foreground text-primary-foreground">
-                    <Layers className="h-3.5 w-3.5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {change.section}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-foreground">
-                      {change.what}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {change.why}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
           </motion.div>
         )}
       </AnimatePresence>
@@ -809,14 +830,14 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
     .join("  ·  ");
 
   return (
-    <div className="border border-surface-highest bg-white p-6 sm:p-10 shadow-ambient">
+    <div className="bg-surface-lowest p-6 sm:p-10">
       {/* Name + contact */}
-      <div className="border-b border-gray-200 pb-5 text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+      <div className="border-b border-surface-highest pb-5 text-center">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           {resume.name}
         </h1>
         {contact && (
-          <p className="mt-1 text-xs text-gray-500 wrap-break-word">
+          <p className="mt-1 text-xs text-muted-foreground wrap-break-word">
             {contact}
           </p>
         )}
@@ -825,7 +846,9 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
       {/* Summary */}
       {resume.summary && (
         <ResumeSection title="Professional Summary">
-          <p className="text-sm leading-7 text-gray-700">{resume.summary}</p>
+          <p className="text-sm leading-7 text-foreground/80">
+            {resume.summary}
+          </p>
         </ResumeSection>
       )}
 
@@ -836,12 +859,14 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
             {(resume.experience ?? []).map((exp, i) => (
               <div key={i}>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-foreground">
                     {exp.company}
                   </span>
-                  <span className="text-xs text-gray-500">{exp.dates}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {exp.dates}
+                  </span>
                 </div>
-                <p className="text-sm italic text-gray-600">
+                <p className="text-sm italic text-muted-foreground">
                   {exp.title}
                   {exp.location ? ` — ${exp.location}` : ""}
                 </p>
@@ -849,7 +874,7 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
                   {(exp.bullets ?? []).map((b, j) => (
                     <li
                       key={j}
-                      className="list-disc text-sm leading-6 text-gray-700"
+                      className="list-disc text-sm leading-6 text-foreground/80"
                     >
                       {b}
                     </li>
@@ -867,10 +892,10 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
           <div className="space-y-2">
             {(resume.skills ?? []).map((s, i) => (
               <div key={i} className="flex flex-wrap gap-x-1 text-sm">
-                <span className="font-semibold text-gray-900">
+                <span className="font-semibold text-foreground">
                   {s.category}:
                 </span>
-                <span className="text-gray-700">
+                <span className="text-foreground/80">
                   {(s.items ?? []).join(", ")}
                 </span>
               </div>
@@ -886,11 +911,13 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
             {(resume.projects ?? []).map((p, i) => (
               <div key={i}>
                 <div>
-                  <span className="font-semibold text-gray-900">{p.name}</span>
+                  <span className="font-semibold text-foreground">
+                    {p.name}
+                  </span>
                   {p.link && (
                     <a
                       href={p.link}
-                      className="ml-2 text-xs text-gray-500 underline"
+                      className="ml-2 text-xs text-muted-foreground underline"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -898,7 +925,7 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
                     </a>
                   )}
                   {p.tech && (
-                    <p className="text-xs text-gray-500 italic mt-0.5">
+                    <p className="text-xs text-muted-foreground italic mt-0.5">
                       {p.tech}
                     </p>
                   )}
@@ -907,7 +934,7 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
                   {(p.bullets ?? []).map((b, j) => (
                     <li
                       key={j}
-                      className="list-disc text-sm leading-6 text-gray-700"
+                      className="list-disc text-sm leading-6 text-foreground/80"
                     >
                       {b}
                     </li>
@@ -929,12 +956,15 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
                 className="flex flex-wrap items-baseline justify-between gap-x-2"
               >
                 <div>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-foreground">
                     {e.institution}
                   </span>
-                  <span className="text-sm text-gray-600"> — {e.degree}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {" "}
+                    — {e.degree}
+                  </span>
                 </div>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   {e.year}
                   {e.gpa ? ` · ${e.gpa}` : ""}
                 </span>
@@ -951,7 +981,7 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
             {(resume.certifications ?? []).map((c, i) => (
               <span
                 key={i}
-                className="bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+                className="bg-surface-low px-3 py-1 text-xs font-medium text-foreground/80"
               >
                 {c}
               </span>
@@ -965,7 +995,10 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
         <ResumeSection title="Awards &amp; Recognition">
           <ul className="space-y-1.5 pl-4">
             {(resume.awards ?? []).map((a, i) => (
-              <li key={i} className="list-disc text-sm leading-6 text-gray-700">
+              <li
+                key={i}
+                className="list-disc text-sm leading-6 text-foreground/80"
+              >
                 {a}
               </li>
             ))}
@@ -974,7 +1007,7 @@ function ResumePreview({ resume }: { resume: TailoredResume }) {
       )}
 
       {/* Download CTA at bottom of preview */}
-      <div className="mt-8 flex flex-col items-center gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-center">
+      <div className="mt-8 flex flex-col items-center gap-3 border-t border-surface-highest pt-6 sm:flex-row sm:justify-center">
         <CheckCircle2 className="h-4 w-4 text-foreground" />
         <span className="text-sm text-muted-foreground">
           Use the <strong>PDF</strong> or <strong>DOCX</strong> buttons above to
@@ -994,7 +1027,7 @@ function ResumeSection({
 }) {
   return (
     <div className="mt-6">
-      <h2 className="mb-3 border-b border-gray-300 pb-1 text-[11px] font-bold uppercase tracking-widest text-gray-500">
+      <h2 className="mb-3 border-b border-surface-highest pb-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
         {title}
       </h2>
       {children}
