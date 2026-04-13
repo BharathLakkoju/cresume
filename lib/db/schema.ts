@@ -28,8 +28,35 @@ export const userEvaluations = pgTable("user_evaluations", {
   suggestions: jsonb("suggestions").notNull(),
   missingKeywords: text("missing_keywords").array().notNull().default([]),
   matchedSkills: text("matched_skills").array().notNull().default([]),
+  resumeGaps: jsonb("resume_gaps").notNull().default([]),
+  mandatorySkills: text("mandatory_skills").array().notNull().default([]),
+  optionalSkills: text("optional_skills").array().notNull().default([]),
+  highValueSkills: text("high_value_skills").array().notNull().default([]),
+  projectRecommendations: jsonb("project_recommendations").notNull().default([]),
+  careerGapSummary: text("career_gap_summary"),
+  aiInsight: text("ai_insight"),
+  fullResult: jsonb("full_result"),
   mode: text("mode").notNull().default("analysis"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull()
+});
+
+/**
+ * Aggregated career gap summary per user. One row per user, upserted on every analysis.
+ * Stores AI-generated cross-analysis insights: recurring skill gaps, top projects, career trajectory.
+ * RLS: users can only SELECT/INSERT/UPDATE their own row.
+ */
+export const userCareerSummary = pgTable("user_career_summary", {
+  userId: uuid("user_id").primaryKey(),
+  topSkillGaps: text("top_skill_gaps").array().notNull().default([]),
+  projectsToStart: jsonb("projects_to_start").notNull().default([]),
+  targetRoles: text("target_roles").array().notNull().default([]),
+  careerNarrative: text("career_narrative"),
+  nextStep: text("next_step"),
+  progressSummary: text("progress_summary"),
+  totalAnalyses: integer("total_analyses").notNull().default(0),
+  avgScore: integer("avg_score").notNull().default(0),
+  bestScore: integer("best_score").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull()
 });
 
 /**

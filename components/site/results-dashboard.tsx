@@ -1,16 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, ChevronRight, Download, X } from "lucide-react";
+import { AlertTriangle, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { AtsEvaluationResult } from "@/lib/ats/types";
 
 const labelMap = {
-  keywordMatch: "KEYWORDS",
-  semanticMatch: "SEMANTIC",
-  skillsAlignment: "SKILLS",
-  experienceRelevance: "EXPERIENCE",
+  keywordMatch: "KEYWORD MATCH",
+  semanticMatch: "SEMANTIC RELEVANCE",
+  skillsAlignment: "SKILLS ALIGNMENT",
+  experienceRelevance: "EXPERIENCE RELEVANCE",
   formattingReadability: "FORMATTING",
 } as const;
 
@@ -25,298 +26,459 @@ interface ResultsDashboardProps {
 }
 
 function getScoreLabel(score: number) {
-  if (score >= 85) return "OPTIMIZED STRENGTH";
-  if (score >= 70) return "STRONG ALIGNMENT";
+  if (score >= 85) return "OPTIMIZED";
+  if (score >= 70) return "STRONG FIT";
   if (score >= 55) return "MODERATE FIT";
-  return "NEEDS IMPROVEMENT";
+  return "NEEDS WORK";
 }
 
-function getScoreDescription(score: number) {
+function getScoreVerdict(score: number) {
   if (score >= 85)
-    return "Your profile is in the top 5% of candidates for this specific role. Minor adjustments can bridge the final gap.";
+    return "Top 5% of candidates. Minor refinements can push past final screening.";
   if (score >= 70)
-    return "Your profile shows strong alignment with the target role. Focus on the gaps below to improve further.";
+    return "Strong alignment. Close the gaps below to compete for the top slot.";
   if (score >= 55)
-    return "Your profile has moderate fit. Address the key gaps and missing keywords to significantly improve your match.";
-  return "Your profile needs significant adjustments to align with this role. Follow the suggestions below.";
+    return "Moderate match. Several critical gaps must be closed before applying.";
+  return "Significant mismatch. Address every HIGH priority gap before submitting.";
 }
 
 export function ResultsDashboard({ result, history }: ResultsDashboardProps) {
-  const scoreLabel = getScoreLabel(result.overallScore);
-  const scoreWords = scoreLabel.split(" ");
+  const [showAllKeywords, setShowAllKeywords] = useState(false);
+
+  const visibleMissing = showAllKeywords
+    ? result.missingKeywords
+    : result.missingKeywords.slice(0, 5);
+  const extraCount = result.missingKeywords.length - 5;
 
   return (
-    <div className="space-y-6 max-lg:mb-10">
-      {/* ── TOP ROW ── */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        {/* Left: Score headline */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="relative overflow-hidden bg-surface-lowest p-8 shadow-ambient"
-        >
-          {result.detectedRole && (
-            <p className="label-sm text-muted-foreground">
-              Analysis /&nbsp;
-              <span className="text-foreground">{result.detectedRole}</span>
-            </p>
-          )}
-          <p className="mt-2 label-sm text-muted-foreground">
-            OVERALL QUALITY INDEX
-          </p>
-
-          {/* Big heading — two lines */}
-          <div className="mt-3">
-            {scoreWords.map((word, i) => (
-              <h2
-                key={i}
-                className={`block font-display text-5xl font-black leading-none tracking-tight sm:text-6xl ${
-                  i === scoreWords.length - 1
-                    ? "text-muted-foreground"
-                    : "text-foreground"
-                }`}
-              >
-                {word}
-              </h2>
-            ))}
-          </div>
-
-          {/* Score number — large, overlapping right side */}
+    <div className="space-y-0 max-lg:mb-10">
+      {/* SCORE HEADER */}
+      <section className="border border-foreground/10">
+        <div className="grid grid-cols-[1fr_auto] border-b border-foreground/10 bg-foreground px-6 py-3">
+          <span className="label-sm text-white/60">
+            {result.detectedRole
+              ? `ANALYSIS / ${result.detectedRole.toUpperCase()}`
+              : "ATS ANALYSIS"}
+          </span>
+          <span className="label-sm text-white/60">SCORE</span>
+        </div>
+        <div className="grid gap-px md:grid-cols-[1fr_300px]">
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="absolute right-8 top-8 flex flex-col items-end"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="bg-surface-lowest p-8"
           >
-            <span className="font-display text-[7rem] font-black leading-none text-foreground/10 sm:text-[9rem]">
-              {result.overallScore}
-            </span>
-            <span className="label-sm -mt-2 text-muted-foreground">
-              PERCENTILE
-            </span>
-          </motion.div>
-
-          <p className="mt-6 max-w-sm text-muted-foreground leading-7">
-            {getScoreDescription(result.overallScore)}
-          </p>
-
-          {result.aiInsight && (
-            <p className="mt-4 max-w-sm text-sm italic text-muted-foreground/80 border-l-2 border-surface-highest pl-4">
-              {result.aiInsight}
+            <p className="label-sm text-muted-foreground">
+              OVERALL QUALITY INDEX
             </p>
-          )}
-
-          <Button variant="default" className="mt-6" size="lg">
-            <Download className="mr-2 h-4 w-4" />
-            Download Analysis
-          </Button>
-        </motion.div>
-
-        {/* Right: Success Vectors — dark card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="bg-foreground p-6 text-primary-foreground"
-        >
-          <p className="label-sm text-white/50">SUCCESS VECTORS</p>
-          <div className="mt-6 space-y-5">
-            {Object.entries(result.breakdown).map(([key, value]) => (
-              <div key={key}>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-white/80">
-                    {labelMap[key as keyof typeof labelMap]}
-                  </span>
-                  <span className="font-semibold text-white">{value}%</span>
-                </div>
-                <div className="mt-2 h-0.5 w-full overflow-hidden bg-white/10">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{ width: `${value}%` }}
-                    transition={{ duration: 0.8, delay: 0.3 }}
-                    className="h-full bg-white/70"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-6 text-xs italic text-white/30">
-            {result.overallScore >= 70
-              ? "High technical alignment detected."
-              : "Improvement opportunities identified."}
-          </p>
-        </motion.div>
-      </div>
-
-      {/* ── BOTTOM ROW ── */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Gap Analysis */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="bg-surface-lowest p-8 shadow-ambient"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center bg-surface-low">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-            </div>
-            <h3 className="font-display text-xl font-semibold text-foreground">
-              Gap Analysis
-            </h3>
-          </div>
-
-          {result.missingKeywords.length > 0 && (
-            <div className="mt-6">
-              <p className="label-sm text-muted-foreground">
-                MISSING STRATEGIC KEYWORDS
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {result.missingKeywords.slice(0, 3).map((kw) => (
-                  <span
-                    key={kw}
-                    className="inline-flex items-center gap-1.5 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700"
-                  >
-                    <X className="h-3 w-3" />
-                    {kw.toUpperCase()}
-                  </span>
-                ))}
-                {result.missingKeywords.length > 3 && (
-                  <span className="inline-flex items-center bg-surface-low px-3 py-1.5 text-xs text-muted-foreground">
-                    + {result.missingKeywords.length - 3} more
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {result.resumeGaps.length > 0 && (
-            <div className="mt-6">
-              <p className="label-sm text-muted-foreground">
-                STRUCTURAL DEFICIENCIES
-              </p>
-              <div className="mt-3 space-y-3">
-                {result.resumeGaps.slice(0, 3).map((gap) => (
-                  <div key={gap.label} className="flex gap-3 bg-red-50 p-4">
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {gap.label}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {gap.detail}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {result.matchedSkills.length > 0 && (
-            <div className="mt-6">
-              <p className="label-sm text-muted-foreground">MATCHED SKILLS</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {result.matchedSkills.slice(0, 6).map((skill) => (
-                  <span
-                    key={skill}
-                    className="bg-surface-low px-3 py-1.5 text-xs font-medium text-foreground"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </motion.div>
-
-        {/* Precision Actions + Historical Trend */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-col bg-surface-lowest p-8 shadow-ambient"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center bg-surface-low">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-            </div>
-            <h3 className="font-display text-xl font-semibold text-foreground">
-              Precision Actions
-            </h3>
-          </div>
-
-          <div className="mt-6 flex-1 space-y-2">
-            {result.suggestions.map((s) => (
-              <div
-                key={s.title}
-                className="flex items-center justify-between gap-4 bg-surface-low p-4 transition-all duration-200 ease-out hover:bg-surface-highest"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    {s.title}
-                  </p>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {s.detail}
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </div>
-            ))}
-          </div>
-
-          {history.length > 0 && (
-            <div className="mt-8">
-              <p className="label-sm text-muted-foreground">HISTORICAL TREND</p>
-              <div className="mt-3 flex items-end gap-1.5 h-14">
-                {history
-                  .slice(0, 8)
-                  .reverse()
-                  .map((entry, i, arr) => (
-                    <motion.div
-                      key={entry.id}
-                      initial={{ height: 0 }}
-                      animate={{
-                        height: `${Math.max(entry.result.overallScore * 0.56, 14)}px`,
-                      }}
-                      transition={{ duration: 0.5, delay: i * 0.1 }}
-                      className={`w-8 max-w-8 ${
+            <div className="mt-3 flex items-end gap-6">
+              <div className="leading-none">
+                {getScoreLabel(result.overallScore)
+                  .split(" ")
+                  .map((word, i, arr) => (
+                    <span
+                      key={i}
+                      className={`block font-display text-5xl font-black leading-tight sm:text-6xl ${
                         i === arr.length - 1
-                          ? "bg-foreground"
-                          : "bg-surface-highest"
+                          ? "text-muted-foreground"
+                          : "text-foreground"
                       }`}
-                      title={`Score: ${entry.result.overallScore} — ${entry.jobTitleHint}`}
-                    />
+                    >
+                      {word}
+                    </span>
                   ))}
               </div>
+              <span className="font-display text-[5rem] font-black leading-none text-foreground/10 sm:text-[7rem]">
+                {result.overallScore}
+              </span>
             </div>
-          )}
-        </motion.div>
-      </div>
+            <p className="mt-5 max-w-sm text-sm leading-7 text-muted-foreground">
+              {getScoreVerdict(result.overallScore)}
+            </p>
+            {result.aiInsight && (
+              <p className="mt-4 max-w-sm border-l-2 border-surface-highest pl-4 text-sm italic text-muted-foreground/70">
+                {result.aiInsight}
+              </p>
+            )}
+            <Button variant="default" className="mt-6" size="sm">
+              <Download className="mr-2 h-3.5 w-3.5" />
+              Download Report
+            </Button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="bg-foreground p-6 text-primary-foreground"
+          >
+            <p className="label-sm text-white/50">SCORE BREAKDOWN</p>
+            <div className="mt-5 space-y-4">
+              {Object.entries(result.breakdown).map(([key, value]) => (
+                <div key={key}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-white/70">
+                      {labelMap[key as keyof typeof labelMap]}
+                    </span>
+                    <span className="font-display text-base font-semibold text-white">
+                      {value}
+                    </span>
+                  </div>
+                  <div className="mt-1.5 h-0.5 w-full overflow-hidden bg-white/10">
+                    <motion.div
+                      initial={{ width: "0%" }}
+                      animate={{ width: `${value}%` }}
+                      transition={{ duration: 0.8, delay: 0.3 }}
+                      className="h-full bg-white/70"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CAREER GAP ASSESSMENT */}
+      {result.careerGapSummary && (
+        <section className="mt-px border border-t-0 border-foreground/10 bg-surface-lowest p-8">
+          <p className="label-sm text-muted-foreground">
+            CAREER GAP ASSESSMENT
+          </p>
+          <p className="mt-4 max-w-3xl text-base leading-8 text-foreground">
+            {result.careerGapSummary}
+          </p>
+        </section>
+      )}
+
+      {/* SKILLS GAP GRID */}
+      <section className="mt-px border border-t-0 border-foreground/10">
+        <div className="border-b border-foreground/10 bg-foreground px-6 py-3">
+          <span className="label-sm text-white/60">SKILLS GAP</span>
+        </div>
+        <div className="grid gap-px md:grid-cols-3">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+            className="bg-surface-lowest p-6"
+          >
+            <p className="label-sm text-muted-foreground">MANDATORY</p>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Missing = screener rejection
+            </p>
+            <ul className="mt-4 space-y-2">
+              {(result.mandatorySkills ?? []).map((skill) => (
+                <li
+                  key={skill}
+                  className="flex items-center gap-3 text-sm text-foreground"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 bg-foreground/60" />
+                  {skill}
+                </li>
+              ))}
+              {!result.mandatorySkills?.length && (
+                <li className="text-xs text-muted-foreground">
+                  All mandatory skills present.
+                </li>
+              )}
+            </ul>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+            className="bg-surface-low p-6"
+          >
+            <p className="label-sm text-muted-foreground">PREFERRED</p>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Reduces ranking
+            </p>
+            <ul className="mt-4 space-y-2">
+              {(result.optionalSkills ?? []).map((skill) => (
+                <li
+                  key={skill}
+                  className="flex items-center gap-3 text-sm text-foreground"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 bg-foreground/40" />
+                  {skill}
+                </li>
+              ))}
+              {!result.optionalSkills?.length && (
+                <li className="text-xs text-muted-foreground">
+                  No unmet preferred skills.
+                </li>
+              )}
+            </ul>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="bg-surface-lowest p-6"
+          >
+            <p className="label-sm text-muted-foreground">HIGH IMPACT</p>
+            <p className="mt-1 text-[11px] text-muted-foreground/60">
+              Differentiates your profile
+            </p>
+            <ul className="mt-4 space-y-2">
+              {(result.highValueSkills ?? []).map((skill) => (
+                <li
+                  key={skill}
+                  className="flex items-center gap-3 text-sm text-foreground"
+                >
+                  <span className="h-1.5 w-1.5 shrink-0 bg-foreground" />
+                  {skill}
+                </li>
+              ))}
+              {!result.highValueSkills?.length && (
+                <li className="text-xs text-muted-foreground">
+                  No additional high-impact skills identified.
+                </li>
+              )}
+            </ul>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* KEYWORD GAP */}
+      <section className="mt-px border border-t-0 border-foreground/10">
+        <div className="border-b border-foreground/10 bg-foreground px-6 py-3">
+          <span className="label-sm text-white/60">KEYWORD GAP</span>
+        </div>
+        <div className="grid gap-px md:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="bg-surface-lowest p-6"
+          >
+            <p className="label-sm text-muted-foreground">MISSING</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {visibleMissing.map((kw) => (
+                <span
+                  key={kw}
+                  className="inline-flex items-center border border-foreground/10 bg-foreground/5 px-2.5 py-1 text-xs font-medium text-foreground"
+                >
+                  {kw}
+                </span>
+              ))}
+              {!showAllKeywords && extraCount > 0 && (
+                <button
+                  onClick={() => setShowAllKeywords(true)}
+                  className="inline-flex items-center gap-1 border border-dashed border-foreground/30 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-foreground/60 hover:text-foreground"
+                >
+                  +{extraCount} more
+                </button>
+              )}
+              {result.missingKeywords.length === 0 && (
+                <span className="text-xs text-muted-foreground">
+                  No missing keywords detected.
+                </span>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.25 }}
+            className="bg-surface-low p-6"
+          >
+            <p className="label-sm text-muted-foreground">MATCHED</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {result.matchedSkills.map((skill) => (
+                <span
+                  key={skill}
+                  className="inline-flex items-center bg-foreground px-2.5 py-1 text-xs font-medium text-background"
+                >
+                  {skill}
+                </span>
+              ))}
+              {result.matchedSkills.length === 0 && (
+                <span className="text-xs text-muted-foreground">
+                  No matched skills detected.
+                </span>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* STRUCTURAL DEFICIENCIES */}
+      {result.resumeGaps.length > 0 && (
+        <section className="mt-px border border-t-0 border-foreground/10">
+          <div className="border-b border-foreground/10 bg-foreground px-6 py-3">
+            <span className="label-sm text-white/60">STRUCTURAL GAPS</span>
+          </div>
+          <div className="divide-y divide-foreground/10">
+            {result.resumeGaps.map((gap, i) => (
+              <motion.div
+                key={gap.label}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 * i }}
+                className="flex gap-4 bg-surface-lowest p-6"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-foreground/50" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {gap.label}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    {gap.detail}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* PROJECTS TO BUILD */}
+      {result.projectRecommendations &&
+        result.projectRecommendations.length > 0 && (
+          <section className="mt-px border border-t-0 border-foreground/10">
+            <div className="border-b border-foreground/10 bg-foreground px-6 py-3 flex items-center justify-between">
+              <span className="label-sm text-white/60">PROJECTS TO BUILD</span>
+              <span className="label-sm text-white/30">
+                {result.projectRecommendations.length} RECOMMENDED
+              </span>
+            </div>
+            <div className="grid gap-px sm:grid-cols-2 lg:grid-cols-3">
+              {result.projectRecommendations.map((proj, i) => (
+                <motion.div
+                  key={proj.title}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 * i }}
+                  className="flex flex-col bg-surface-lowest p-6"
+                >
+                  {/* Header row: index + priority */}
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <span className="font-display text-4xl font-black leading-none text-foreground/10 select-none">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {proj.priority && (
+                      <span
+                        className={`label-sm px-2 py-1 shrink-0 ${
+                          proj.priority === "high"
+                            ? "bg-foreground text-primary-foreground"
+                            : proj.priority === "medium"
+                              ? "bg-surface-highest text-foreground"
+                              : "bg-surface-low text-muted-foreground"
+                        }`}
+                      >
+                        {proj.priority.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <p className="font-display font-bold text-foreground leading-snug">
+                    {proj.title}
+                  </p>
+
+                  {/* Description */}
+                  <p className="mt-3 flex-1 text-sm leading-7 text-muted-foreground">
+                    {proj.description}
+                  </p>
+
+                  {/* Impact */}
+                  <div className="mt-4 border-l-2 border-surface-highest pl-3">
+                    <p className="label-sm text-muted-foreground mb-1">
+                      IMPACT
+                    </p>
+                    <p className="text-xs leading-5 text-muted-foreground">
+                      {proj.impact}
+                    </p>
+                  </div>
+
+                  {/* Stack tags */}
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {proj.skills.map((s) => (
+                      <span
+                        key={s}
+                        className="bg-surface-highest px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-foreground"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </section>
+        )}
+
+      {/* PRIORITISED ACTIONS */}
+      <section className="mt-px border border-t-0 border-foreground/10">
+        <div className="border-b border-foreground/10 bg-foreground px-6 py-3">
+          <span className="label-sm text-white/60">PRIORITISED ACTIONS</span>
+        </div>
+        <div className="divide-y divide-foreground/10">
+          {result.suggestions.map((s, i) => (
+            <motion.div
+              key={s.title}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.04 * i }}
+              className="flex gap-4 bg-surface-lowest p-6"
+            >
+              <span
+                className={`label-sm mt-0.5 w-16 shrink-0 text-center py-1 ${
+                  s.priority === "high"
+                    ? "bg-foreground text-background"
+                    : s.priority === "medium"
+                      ? "bg-surface-highest text-foreground"
+                      : "bg-surface-low text-muted-foreground"
+                }`}
+              >
+                {s.priority.toUpperCase()}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="font-display text-sm font-semibold text-foreground">
+                  {s.title}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {s.detail}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      {/* SCORE HISTORY */}
+      {history.length > 1 && (
+        <section className="mt-px border border-t-0 border-foreground/10 bg-surface-lowest p-6">
+          <p className="label-sm mb-4 text-muted-foreground">SCORE HISTORY</p>
+          <div className="flex items-end gap-2 h-16">
+            {history
+              .slice(0, 10)
+              .reverse()
+              .map((entry, i, arr) => (
+                <motion.div
+                  key={entry.id}
+                  initial={{ height: 0 }}
+                  animate={{
+                    height: `${Math.max(entry.result.overallScore * 0.64, 8)}px`,
+                  }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  className={`flex-1 max-w-10 ${
+                    i === arr.length - 1
+                      ? "bg-foreground"
+                      : "bg-surface-highest"
+                  }`}
+                  title={`${entry.result.overallScore} — ${entry.jobTitleHint}`}
+                />
+              ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

@@ -1,343 +1,466 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Upload, TrendingUp, Target, Zap, BarChart3 } from "lucide-react";
+import {
+  ScanSearch,
+  Wand2,
+  PenLine,
+  ArrowRight,
+  BarChart3,
+  Target,
+  TrendingUp,
+  Zap,
+  AlertCircle,
+  Hammer,
+  ChevronRight,
+} from "lucide-react";
+
 import { useEvaluationStore } from "@/store/evaluation-store";
+import {
+  getSupabaseBrowserClient,
+  hasSupabaseConfig,
+} from "@/lib/supabase/client";
+import type { CareerSummary, ProjectRecommendation } from "@/lib/ats/types";
+
+interface RemoteEntry {
+  id: string;
+  job_title: string | null;
+  overall_score: number;
+  mode: string;
+  created_at: string;
+  mandatory_skills: string[];
+  missing_keywords: string[];
+}
 
 export default function AppDashboardPage() {
-  const { history } = useEvaluationStore();
+  const { history: localHistory } = useEvaluationStore();
   const [mountedAt] = useState(() => Date.now());
+  const [remoteHistory, setRemoteHistory] = useState<RemoteEntry[] | null>(
+    null,
+  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [careerSummary, setCareerSummary] = useState<
+    | (CareerSummary & {
+        total_analyses: number;
+        avg_score: number;
+        best_score: number;
+      })
+    | null
+  >(null);
+
+  useEffect(() => {
+    if (!hasSupabaseConfig()) return;
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase) return;
+    let active = true;
+
+    const load = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!active || !user) return;
+      setIsLoggedIn(true);
+
+      const [historyRes, summaryRes] = await Promise.all([
+        supabase
+          .from("user_evaluations")
+          .select(
+            "id, job_title, overall_score, mode, created_at, mandatory_skills, missing_keywords",
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(30),
+        supabase
+          .from("user_career_summary")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+
+      if (active) {
+        setRemoteHistory((historyRes.data as RemoteEntry[] | null) ?? []);
+        if (summaryRes.data) {
+          setCareerSummary({
+            topSkillGaps: summaryRes.data.top_skill_gaps ?? [],
+            projectsToStart: (summaryRes.data.projects_to_start ??
+              []) as ProjectRecommendation[],
+            targetRoles: summaryRes.data.target_roles ?? [],
+            careerNarrative: summaryRes.data.career_narrative ?? "",
+            nextStep: summaryRes.data.next_step ?? "",
+            progressSummary: summaryRes.data.progress_summary ?? null,
+            total_analyses: summaryRes.data.total_analyses ?? 0,
+            avg_score: summaryRes.data.avg_score ?? 0,
+            best_score: summaryRes.data.best_score ?? 0,
+          });
+        }
+      }
+    };
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const stats = useMemo(() => {
-    if (history.length === 0) return null;
+    // Prefer server-derived stats from user_career_summary when logged in
+    if (isLoggedIn && careerSummary && careerSummary.total_analyses > 0) {
+      const oneWeekAgo = mountedAt - 7 * 24 * 60 * 60 * 1000;
+      const thisWeek = remoteHistory
+        ? remoteHistory.filter(
+            (h) => new Date(h.created_at).getTime() > oneWeekAgo,
+          ).length
+        : 0;
+      return {
+        total: careerSummary.total_analyses,
+        avg: careerSummary.avg_score,
+        best: careerSummary.best_score,
+        thisWeek,
+      };
+    }
 
-    const scores = history.map((h) => h.result.overallScore);
-    const total = history.length;
+    const useRemote = isLoggedIn && remoteHistory !== null;
+    const entries = useRemote ? remoteHistory! : localHistory;
+    if (entries.length === 0) return null;
+
+    const scores = useRemote
+      ? remoteHistory!.map((h) => h.overall_score)
+      : localHistory.map((h) => h.result.overallScore);
+
+    const total = scores.length;
     const avg = Math.round(scores.reduce((a, b) => a + b, 0) / total);
     const best = Math.max(...scores);
-
     const oneWeekAgo = mountedAt - 7 * 24 * 60 * 60 * 1000;
-    const thisWeek = history.filter(
-      (h) => new Date(h.createdAt).getTime() > oneWeekAgo,
-    ).length;
 
-    const keywordFreq: Record<string, number> = {};
-    for (const entry of history) {
-      for (const kw of entry.result.missingKeywords) {
-        keywordFreq[kw] = (keywordFreq[kw] ?? 0) + 1;
-      }
-    }
-    const topMissing = Object.entries(keywordFreq)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([kw, count]) => ({ kw, count }));
+    const thisWeek = useRemote
+      ? remoteHistory!.filter(
+          (h) => new Date(h.created_at).getTime() > oneWeekAgo,
+        ).length
+      : localHistory.filter((h) => new Date(h.createdAt).getTime() > oneWeekAgo)
+          .length;
 
-    const buckets = [
-      { label: "0–49", min: 0, max: 49, color: "bg-destructive/60" },
-      { label: "50–69", min: 50, max: 69, color: "bg-amber-500/60" },
-      { label: "70–89", min: 70, max: 89, color: "bg-foreground/40" },
-      { label: "90–100", min: 90, max: 100, color: "bg-foreground" },
-    ].map((b) => ({
-      ...b,
-      count: scores.filter((s) => s >= b.min && s <= b.max).length,
-    }));
-
-    return { total, avg, best, thisWeek, topMissing, buckets, scores };
-  }, [history, mountedAt]);
-
-  if (!stats) {
-    return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-sm"
-        >
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center bg-surface-low">
-            <BarChart3 className="h-7 w-7 text-muted-foreground" />
-          </div>
-          <p className="label-sm text-muted-foreground mb-2">
-            PRECISION PORTAL
-          </p>
-          <h1 className="font-display text-3xl font-bold text-foreground">
-            No scans yet
-          </h1>
-          <p className="mt-3 text-base text-muted-foreground">
-            Run your first evaluation to see analytics and insights here.
-          </p>
-          <Link
-            href="/app/upload"
-            className="mt-6 inline-flex items-center gap-2 bg-foreground px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 ease-out hover:opacity-80"
-          >
-            <Upload className="h-4 w-4" />
-            Start Evaluation
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
-  const { total, avg, best, thisWeek, topMissing, buckets, scores } = stats;
-  const maxBucketCount = Math.max(...buckets.map((b) => b.count), 1);
+    return { total, avg, best, thisWeek };
+  }, [localHistory, remoteHistory, isLoggedIn, mountedAt, careerSummary]);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-10">
+    <div className="p-4 sm:p-6 lg:p-10 max-lg:mb-10">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.4 }}
       >
-        <p className="label-sm text-muted-foreground">OVERVIEW</p>
+        <p className="label-sm text-muted-foreground">PRECISION PORTAL</p>
         <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Your Dashboard
+          What do you want to do?
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          Analytics from {total} evaluation{total !== 1 ? "s" : ""} in your
-          history.
+        <p className="mt-2 text-sm text-muted-foreground">
+          Pick a tool below to get started.
         </p>
 
-        {/* Stat Cards — 2 cols on mobile, 4 on large */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-          {[
-            { label: "TOTAL SCANS", value: total, Icon: BarChart3 },
-            { label: "AVG. SCORE", value: `${avg}`, Icon: Target },
-            { label: "BEST SCORE", value: `${best}`, Icon: TrendingUp },
-            { label: "THIS WEEK", value: thisWeek, Icon: Zap },
-          ].map(({ label, value, Icon }, i) => (
-            <motion.div
-              key={label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.05 * i }}
-              className="bg-surface-low p-4 sm:p-5"
-            >
-              <div className="flex items-center justify-between">
-                <p className="label-sm text-muted-foreground truncate">
-                  {label}
-                </p>
-                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="mt-8 grid gap-px border border-foreground/10 lg:grid-cols-3">
+          {/* Analyze — wide card */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+            className="flex flex-col justify-between bg-surface-lowest p-7 lg:col-span-2"
+          >
+            <div>
+              <div className="mb-5 flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center bg-foreground text-primary-foreground">
+                  <ScanSearch className="h-5 w-5" />
+                </div>
+                <span className="label-sm text-muted-foreground">
+                  ATS GAP ANALYSIS
+                </span>
               </div>
-              <p className="mt-2 font-display text-3xl font-bold text-foreground sm:mt-3 sm:text-4xl">
-                {value}
+              <h2 className="font-display text-2xl font-bold text-foreground">
+                Find the gap. Close it.
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Get a precise ATS score, skill gaps, what to learn, and what
+                projects to build to land the role.
+              </p>
+            </div>
+            <Link
+              href="/app/analyze"
+              className="mt-8 inline-flex items-center gap-2 bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-primary-foreground transition-opacity hover:opacity-80 self-start"
+            >
+              ANALYZE RESUME
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Tailor */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="flex flex-col justify-between bg-surface-lowest p-7"
+          >
+            <div>
+              <div className="mb-5 flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center bg-surface-highest text-foreground">
+                  <Wand2 className="h-5 w-5" />
+                </div>
+                <span className="label-sm text-muted-foreground">
+                  RESUME TAILORING
+                </span>
+              </div>
+              <h2 className="font-display text-2xl font-bold text-foreground">
+                Rewrite for the role.
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Mirror the JD&apos;s exact vocabulary and requirements in your
+                resume.
+              </p>
+            </div>
+            <Link
+              href="/app/tailor"
+              className="mt-8 inline-flex items-center gap-2 border border-foreground/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-foreground transition-colors hover:bg-surface-low self-start"
+            >
+              TAILOR RESUME
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Build */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="flex flex-col justify-between bg-surface-lowest p-7"
+          >
+            <div>
+              <div className="mb-5 flex items-start justify-between">
+                <div className="flex h-10 w-10 items-center justify-center bg-surface-highest text-foreground">
+                  <PenLine className="h-5 w-5" />
+                </div>
+                <span className="label-sm text-muted-foreground">
+                  RESUME BUILDER
+                </span>
+              </div>
+              <h2 className="font-display text-2xl font-bold text-foreground">
+                Build from scratch.
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Generate a JD-matched resume from your saved profile in one
+                click.
+              </p>
+            </div>
+            <Link
+              href="/app/build"
+              className="mt-8 inline-flex items-center gap-2 border border-foreground/20 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-foreground transition-colors hover:bg-surface-low self-start"
+            >
+              BUILD RESUME
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </motion.div>
+
+          {/* Stats panel */}
+          {stats ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="flex flex-col bg-foreground p-7 lg:col-span-2"
+            >
+              <p className="label-sm text-white/50 mb-5">YOUR STATS</p>
+              <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+                {[
+                  { label: "SCANS", value: stats.total, Icon: BarChart3 },
+                  { label: "AVG SCORE", value: stats.avg, Icon: Target },
+                  { label: "BEST SCORE", value: stats.best, Icon: TrendingUp },
+                  { label: "THIS WEEK", value: stats.thisWeek, Icon: Zap },
+                ].map(({ label, value, Icon }) => (
+                  <div key={label}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Icon className="h-3 w-3 text-white/40" />
+                      <p className="label-sm text-white/40">{label}</p>
+                    </div>
+                    <p className="font-display text-3xl font-bold text-white">
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+              className="flex flex-col justify-center bg-surface-low p-7 lg:col-span-2"
+            >
+              <p className="label-sm text-muted-foreground mb-2">
+                NO SCANS YET
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Run your first analysis and your stats will appear here.
               </p>
             </motion.div>
-          ))}
+          )}
         </div>
 
-        {/* Charts — full width on mobile, side-by-side on lg */}
-        <div className="mt-6 grid gap-4 sm:gap-6 lg:grid-cols-2">
-          {/* Score Trend */}
+        {/* ── Career Gap Summary ─────────────────────────────────────── */}
+        {careerSummary && (
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-surface-low p-4 sm:p-6"
-          >
-            <p className="label-sm text-muted-foreground mb-4">SCORE TREND</p>
-            <ScoreTrend scores={[...scores].reverse()} />
-          </motion.div>
-
-          {/* Score Distribution */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-            className="bg-surface-low p-4 sm:p-6"
-          >
-            <p className="label-sm text-muted-foreground mb-4">
-              SCORE DISTRIBUTION
-            </p>
-            <div className="space-y-3">
-              {buckets.map((b) => (
-                <div key={b.label} className="flex items-center gap-3">
-                  <span className="label-sm w-14 shrink-0 text-muted-foreground">
-                    {b.label}
-                  </span>
-                  <div className="flex-1 overflow-hidden bg-surface-highest h-2">
-                    <motion.div
-                      className={`h-full ${b.color}`}
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${(b.count / maxBucketCount) * 100}%`,
-                      }}
-                      transition={{
-                        duration: 0.6,
-                        delay: 0.3,
-                        ease: "easeOut",
-                      }}
-                    />
-                  </div>
-                  <span className="label-sm w-4 shrink-0 text-right text-foreground">
-                    {b.count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Top Missing Keywords */}
-        {topMissing.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
-            className="mt-4 bg-surface-low p-4 sm:mt-6 sm:p-6"
+            className="mt-px"
           >
-            <p className="label-sm text-muted-foreground mb-4">
-              MOST FREQUENTLY MISSING KEYWORDS
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {topMissing.map(({ kw, count }, i) => (
-                <motion.span
-                  key={kw}
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.25, delay: 0.35 + i * 0.04 }}
-                  className="inline-flex items-center gap-1.5 bg-surface-highest px-3 py-1.5 text-xs font-medium text-foreground"
+            <div className="grid gap-px border border-t-0 border-foreground/10 lg:grid-cols-3">
+              {/* Narrative + Next Step */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.35 }}
+                className="flex flex-col bg-foreground p-7"
+              >
+                <p className="label-sm text-white/50 mb-4">CAREER TRAJECTORY</p>
+                {careerSummary.careerNarrative && (
+                  <p className="text-sm leading-7 text-white/80 flex-1">
+                    {careerSummary.careerNarrative}
+                  </p>
+                )}
+                {careerSummary.progressSummary && (
+                  <p className="mt-3 text-xs leading-6 text-white/50 border-l-2 border-white/20 pl-3">
+                    {careerSummary.progressSummary}
+                  </p>
+                )}
+                {careerSummary.nextStep && (
+                  <div className="mt-5 border border-white/20 p-4">
+                    <p className="label-sm text-white/40 mb-2">NEXT STEP</p>
+                    <p className="text-sm font-semibold text-white leading-6">
+                      {careerSummary.nextStep}
+                    </p>
+                  </div>
+                )}
+                {careerSummary.targetRoles.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {careerSummary.targetRoles.map((role) => (
+                      <span
+                        key={role}
+                        className="bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/60"
+                      >
+                        {role}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Top Skill Gaps */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.4 }}
+                className="flex flex-col bg-surface-lowest p-7"
+              >
+                <div className="mb-4 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  <p className="label-sm text-muted-foreground">
+                    RECURRING SKILL GAPS
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Skills that keep appearing as missing across your analyses.
+                </p>
+                <ul className="space-y-2 flex-1">
+                  {careerSummary.topSkillGaps.slice(0, 8).map((skill, i) => (
+                    <li key={skill} className="flex items-center gap-3">
+                      <span className="label-sm w-4 shrink-0 text-muted-foreground/50">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="h-px flex-1 bg-surface-highest" />
+                      <span className="text-sm font-medium text-foreground">
+                        {skill}
+                      </span>
+                    </li>
+                  ))}
+                  {careerSummary.topSkillGaps.length === 0 && (
+                    <li className="text-xs text-muted-foreground">
+                      No persistent gaps detected yet.
+                    </li>
+                  )}
+                </ul>
+                <Link
+                  href="/app/analyze"
+                  className="mt-6 flex items-center gap-1.5 label-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  {kw}
-                  <span className="bg-foreground/10 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    ×{count}
-                  </span>
-                </motion.span>
-              ))}
+                  RUN ANOTHER SCAN <ChevronRight className="h-3 w-3" />
+                </Link>
+              </motion.div>
+
+              {/* Projects to Build */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.45 }}
+                className="flex flex-col bg-surface-lowest p-7"
+              >
+                <div className="mb-4 flex items-center gap-2">
+                  <Hammer className="h-4 w-4 text-muted-foreground" />
+                  <p className="label-sm text-muted-foreground">
+                    PROJECTS TO BUILD
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Highest-ROI projects to close your skill gaps.
+                </p>
+                <div className="space-y-4 flex-1">
+                  {careerSummary.projectsToStart.slice(0, 3).map((proj) => (
+                    <div
+                      key={proj.title}
+                      className="border-l-2 border-surface-highest pl-4"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-semibold text-foreground leading-5">
+                          {proj.title}
+                        </p>
+                        {proj.priority && (
+                          <span
+                            className={`shrink-0 label-sm px-1.5 py-0.5 ${
+                              proj.priority === "high"
+                                ? "bg-foreground text-primary-foreground"
+                                : proj.priority === "medium"
+                                  ? "bg-surface-highest text-foreground"
+                                  : "bg-surface-low text-muted-foreground"
+                            }`}
+                          >
+                            {proj.priority.toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-muted-foreground line-clamp-2">
+                        {proj.description}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {proj.skills.slice(0, 3).map((s) => (
+                          <span
+                            key={s}
+                            className="bg-surface-highest px-1.5 py-0.5 text-[10px] text-foreground"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  {careerSummary.projectsToStart.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Run an analysis to get project recommendations.
+                    </p>
+                  )}
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
       </motion.div>
-    </div>
-  );
-}
-
-function ScoreTrend({ scores }: { scores: number[] }) {
-  if (scores.length < 2) {
-    return (
-      <div className="flex items-center justify-center h-32 text-sm text-muted-foreground">
-        Run at least 2 scans to see the trend.
-      </div>
-    );
-  }
-
-  const W = 320;
-  const H = 120;
-  const pad = { top: 8, right: 8, bottom: 24, left: 32 };
-  const chartW = W - pad.left - pad.right;
-  const chartH = H - pad.top - pad.bottom;
-
-  const minS = Math.max(0, Math.min(...scores) - 5);
-  const maxS = Math.min(100, Math.max(...scores) + 5);
-  const range = maxS - minS || 1;
-
-  const pts = scores.map((s, i) => ({
-    x: pad.left + (i / (scores.length - 1)) * chartW,
-    y: pad.top + chartH - ((s - minS) / range) * chartH,
-    score: s,
-  }));
-
-  const polyline = pts.map((p) => `${p.x},${p.y}`).join(" ");
-  const areaPath = [
-    `M ${pts[0].x} ${pad.top + chartH}`,
-    ...pts.map((p) => `L ${p.x} ${p.y}`),
-    `L ${pts[pts.length - 1].x} ${pad.top + chartH}`,
-    "Z",
-  ].join(" ");
-
-  return (
-    <div className="w-full overflow-hidden">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        style={{ height: H }}
-        aria-label="Score trend chart"
-      >
-        <defs>
-          <linearGradient id="trend-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="currentColor" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        {[0, 50, 100].map((v) => {
-          const y = pad.top + chartH - ((v - minS) / range) * chartH;
-          if (y < pad.top - 1 || y > pad.top + chartH + 1) return null;
-          return (
-            <text
-              key={v}
-              x={pad.left - 6}
-              y={y + 4}
-              textAnchor="end"
-              fontSize={9}
-              fill="currentColor"
-              opacity={0.4}
-            >
-              {v}
-            </text>
-          );
-        })}
-        <line
-          x1={pad.left}
-          x2={pad.left + chartW}
-          y1={pad.top + chartH / 2}
-          y2={pad.top + chartH / 2}
-          stroke="currentColor"
-          strokeOpacity={0.08}
-          strokeDasharray="4 3"
-        />
-        <path
-          d={areaPath}
-          fill="url(#trend-fill)"
-          className="text-foreground"
-        />
-        <polyline
-          points={polyline}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          className="text-foreground"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {pts.map((p, i) => (
-          <g key={i}>
-            <circle
-              cx={p.x}
-              cy={p.y}
-              r={4}
-              fill="white"
-              stroke="currentColor"
-              strokeWidth={2}
-              className="text-foreground"
-            />
-            {i === pts.length - 1 && (
-              <text
-                x={p.x + 6}
-                y={p.y + 4}
-                fontSize={9}
-                fill="currentColor"
-                opacity={0.6}
-              >
-                {p.score}
-              </text>
-            )}
-          </g>
-        ))}
-        {pts.map((p, i) => (
-          <text
-            key={i}
-            x={p.x}
-            y={H - 4}
-            textAnchor="middle"
-            fontSize={9}
-            fill="currentColor"
-            opacity={0.35}
-          >
-            #{i + 1}
-          </text>
-        ))}
-      </svg>
     </div>
   );
 }
