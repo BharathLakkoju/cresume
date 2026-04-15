@@ -1,26 +1,11 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { FadeIn } from "@/components/site/fade-in";
-
-const bars = [
-  { height: 38, tone: "lite" as const },
-  { height: 55, tone: "mid" as const },
-  { height: 72, tone: "full" as const },
-  { height: 85, tone: "full" as const },
-  { height: 68, tone: "mid" as const },
-  { height: 92, tone: "full" as const },
-  { height: 78, tone: "mid" as const },
-];
-
-const barToneClass: Record<"lite" | "mid" | "full", string> = {
-  lite: "bg-surface-highest",
-  mid: "bg-foreground/25",
-  full: "bg-foreground",
-};
 
 export function HeroSection() {
   const { scrollY } = useScroll();
@@ -29,8 +14,8 @@ export function HeroSection() {
   const blob2Y = useTransform(scrollY, [0, 800], [0, -140]);
   const blob3Y = useTransform(scrollY, [0, 800], [0, 110]);
 
-  const cardY = useTransform(scrollY, [0, 800], [0, -90]);
-  const cardScale = useTransform(scrollY, [0, 800], [1.4, 1]);
+  const cardY = useTransform(scrollY, [0, 600], [0, -50]);
+  const cardScale = useTransform(scrollY, [0, 600], [1.08, 1]);
 
   return (
     <section
@@ -89,60 +74,21 @@ export function HeroSection() {
           </div>
         </FadeIn>
 
-        {/* Chart Preview Card */}
+        {/* App Preview Image */}
         <FadeIn delay={0.3}>
           <motion.div
             style={{ y: cardY, scale: cardScale }}
-            className="mx-auto mt-24 max-w-lg will-change-transform"
+            className="mx-auto mt-28 max-w-4xl will-change-transform"
           >
             <div className="bg-surface-lowest p-1 shadow-panel">
-              <div className="bg-surface-low p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="label-sm text-muted-foreground">
-                    ATS QUANTIFIED
-                  </p>
-                  <div className="flex gap-1.5">
-                    <div className="h-2 w-2 bg-surface-highest" />
-                    <div className="h-2 w-2 bg-surface-highest" />
-                    <div className="h-2 w-2 bg-foreground" />
-                  </div>
-                </div>
-                {/* Three-tone animated bar chart */}
-                <div className="flex items-end justify-center gap-2.5 pt-2">
-                  {bars.map((bar, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ height: 0 }}
-                      whileInView={{ height: `${bar.height}px` }}
-                      viewport={{ once: true }}
-                      transition={{
-                        duration: 0.6,
-                        delay: 0.4 + i * 0.08,
-                        ease: "easeOut",
-                      }}
-                      className={`w-8 sm:w-9 ${barToneClass[bar.tone]}`}
-                      style={{ minHeight: 4 }}
-                    />
-                  ))}
-                </div>
-                {/* Progress bar */}
-                <div className="mt-4 h-0.5 overflow-hidden bg-surface-highest">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    whileInView={{ width: "65%" }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 1.4,
-                      delay: 0.8,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                    className="h-full bg-foreground"
-                  />
-                </div>
-                <p className="mt-2 label-sm text-right text-muted-foreground">
-                  ANALYZING STRUCTURE...
-                </p>
-              </div>
+              <Image
+                src="/home_page.png"
+                alt="ATS Precise app preview"
+                width={1200}
+                height={800}
+                className="w-full object-cover"
+                priority
+              />
             </div>
           </motion.div>
         </FadeIn>

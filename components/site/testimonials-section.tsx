@@ -10,16 +10,16 @@ const testimonials = [
   {
     quote:
       "atsprecise helped me realize my resume was being filtered out not because of my skills, but because of my structure. After one scan, I landed 3 interviews in a week.",
-    initials: "SM",
-    name: "Sarah Mitchell",
-    role: "SENIOR PRODUCT DESIGNER",
+    initials: "SL",
+    name: "Ram Sundar",
+    role: "DATA SCIENTIST",
   },
   {
     quote:
       "The semantic mapping is scary accurate. It picked up on nuances in my engineering background that generic ATS checkers completely missed.",
-    initials: "AL",
-    name: "Alex Liao",
-    role: "FULL-STACK DEVELOPER",
+    initials: "SR",
+    name: "Siva Raghavan",
+    role: "DATA ANALYST",
   },
 ];
 
