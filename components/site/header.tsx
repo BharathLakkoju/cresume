@@ -29,9 +29,9 @@ function handleNavClick(
     if (el) {
       e.preventDefault();
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-      onClose?.();
     }
-    // else: let the browser navigate to /#id on the home page
+    // Always close the menu whether we scroll or navigate
+    onClose?.();
   }
 }
 
@@ -142,12 +142,15 @@ export function Header() {
               <div className="flex flex-col gap-3 pt-4">
                 <Link
                   href="/auth"
+                  onClick={() => setMobileOpen(false)}
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Sign In
                 </Link>
                 <Button size="default" asChild>
-                  <Link href="/auth">Get Started</Link>
+                  <Link href="/auth" onClick={() => setMobileOpen(false)}>
+                    Get Started
+                  </Link>
                 </Button>
               </div>
             </nav>

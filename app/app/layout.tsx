@@ -21,8 +21,8 @@ export default function AppSectionLayout({
     <div className="flex h-screen overflow-hidden">
       <AppAuthGuard />
       <Sidebar />
-      {/* pt-14 = mobile top bar height, pb-16 = mobile bottom tab bar height */}
-      <main className="relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-surface-base pt-14 pb-16 lg:pt-0 lg:pb-0">
+      {/* pt-14 = mobile top bar height, pb-24 = mobile bottom tab bar height + extra breathing room */}
+      <main className="relative min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-surface-base pt-14 pb-24 lg:pt-0 lg:pb-0">
         {children}
       </main>
     </div>

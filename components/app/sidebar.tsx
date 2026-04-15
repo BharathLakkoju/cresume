@@ -15,6 +15,8 @@ import {
 import type { Route } from "next";
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -89,6 +91,20 @@ export function Sidebar() {
     <>
       {/* ── Desktop sidebar (lg+) ─────────────────────────────────────── */}
       <aside className="hidden w-56 shrink-0 flex-col border-r border-[hsl(var(--border)/0.08)] bg-surface-base lg:flex lg:h-full lg:overflow-y-auto">
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-6 py-5 border-b border-[hsl(var(--border)/0.08)]">
+          <Image
+            src="/logo.ico"
+            alt="atsprecise"
+            width={28}
+            height={28}
+            className="rounded-sm"
+          />
+          <span className="font-display text-base font-bold tracking-tight text-foreground">
+            atsprecise
+          </span>
+        </div>
+
         {/* User Section */}
         <div className="p-6">
           <div className="flex items-center gap-3">
@@ -162,9 +178,18 @@ export function Sidebar() {
 
       {/* ── Mobile top bar (< lg) ─────────────────────────────────────── */}
       <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between px-4 border-b border-[hsl(var(--border)/0.08)] bg-surface-base lg:hidden">
-        <span className="font-display text-base font-bold tracking-tight text-foreground">
-          atsprecise
-        </span>
+        <div className="flex items-center gap-2">
+          <Image
+            src="/logo.ico"
+            alt="atsprecise"
+            width={26}
+            height={26}
+            className="rounded-sm"
+          />
+          <span className="font-display text-base font-bold tracking-tight text-foreground">
+            atsprecise
+          </span>
+        </div>
         {user ? (
           <MobileUserMenu initials={initials} onSignOut={handleSignOut} />
         ) : (

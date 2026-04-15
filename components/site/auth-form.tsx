@@ -76,7 +76,7 @@ export function AuthForm() {
         if (authError) throw authError;
         const nextPath = searchParams.get("next");
         const safeNextPath =
-          nextPath && nextPath.startsWith("/") ? nextPath : "/app/upload";
+          nextPath && nextPath.startsWith("/") ? nextPath : "/app";
 
         router.push(safeNextPath as any);
         router.refresh();

@@ -6,7 +6,9 @@ function isAnonymousTrialPath(pathname: string) {
     pathname === "/app/upload" ||
     pathname.startsWith("/app/upload/") ||
     pathname === "/app/analyze" ||
-    pathname.startsWith("/app/analyze/")
+    pathname.startsWith("/app/analyze/") ||
+    pathname === "/app/tailor" ||
+    pathname.startsWith("/app/tailor/")
   );
 }
 
