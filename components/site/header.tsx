@@ -4,6 +4,7 @@ import type { Route } from "next";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -42,8 +43,15 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between gap-6">
         <Link
           href="/"
-          className="font-display text-lg font-bold tracking-tight text-foreground"
+          className="flex items-center gap-2 font-display text-lg font-bold tracking-tight text-foreground"
         >
+          <Image
+            src="/logo.ico"
+            alt="atsprecise"
+            width={32}
+            height={32}
+            className="rounded-sm"
+          />
           atsprecise
         </Link>
 
